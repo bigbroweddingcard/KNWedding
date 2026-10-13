@@ -5,7 +5,56 @@
    Google Apps Script API (config.js). The same API stores guests'
    blessings in the Google Sheet and the owner's edits made at /admin.
    ===================================================================== */
-const FONTS='<link rel="preconnect" href="https://fonts.googleapis.com">\n<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;0,500;1,400&family=Pinyon+Script&family=Trirong:wght@300;400;500&family=Taviraj:wght@300;400&display=swap">';
+/* ---------- theme: colours, fonts, sizes, background, flowers (all editable at /admin) ---------- */
+const THEME_DEFAULT={
+  colors:{paper:'#f7f1ec',paper2:'#efe5dc',card:'#fbf8f4',backdrop:'#e6ddd3',ink:'#453e3a',inkSoft:'#7b706a',gold:'#b6976a',rose:'#b0505e',sage:'#7f8f72',sageDeep:'#5b6a50',linen:'#ecdfd1'},
+  fonts:{latin:'Bodoni Moda',script:'Pinyon Script',thDisplay:'Trirong',thBody:'Taviraj'},
+  sizes:{text:100,hero:100,title:100,names:100},
+  bg:{type:'paper',image:'',opacity:30},
+  flowers:'wisteria'
+};
+const COLOR_VARS={paper:'--paper',paper2:'--paper-2',card:'--card',backdrop:'--backdrop',ink:'--ink',inkSoft:'--ink-soft',gold:'--gold',rose:'--rose',sage:'--sage',sageDeep:'--sage-deep',linen:'--linen'};
+/* Google Fonts and the weights each one really has (asking for a missing weight breaks the whole request) */
+const FONT_SPEC={'Bodoni Moda':'ital,wght@0,400;0,500;1,400','Playfair Display':'ital,wght@0,400;0,500;1,400','Cormorant Garamond':'ital,wght@0,400;0,500;1,400','Cinzel':'wght@400;500','Libre Baskerville':'ital,wght@0,400;1,400','Marcellus':'','Italiana':'',
+  'Pinyon Script':'','Great Vibes':'','Parisienne':'','Allura':'','Alex Brush':'',
+  'Trirong':'wght@300;400;500','Taviraj':'wght@300;400;500','Noto Serif Thai':'wght@300;400;500','Charm':'wght@400;700','Charmonman':'wght@400;700','Chonburi':'','Mitr':'wght@300;400;500','Prompt':'wght@300;400;500','Kanit':'wght@300;400;500','Athiti':'wght@300;400;500','Pridi':'wght@300;400;500','Sriracha':'','Itim':'',
+  'Sarabun':'wght@300;400;500','Noto Sans Thai':'wght@300;400;500','Niramit':'wght@300;400;500','K2D':'wght@300;400;500','Krub':'wght@300;400;500','Bai Jamjuree':'wght@300;400;500','Chakra Petch':'wght@300;400;500','Mali':'wght@300;400;500'};
+const FONT_ROLES={
+  latin:['Bodoni Moda','Playfair Display','Cormorant Garamond','Cinzel','Libre Baskerville','Marcellus','Italiana'],
+  script:['Pinyon Script','Great Vibes','Parisienne','Allura','Alex Brush'],
+  thDisplay:['Trirong','Taviraj','Noto Serif Thai','Charm','Charmonman','Chonburi','Pridi','Mitr','Prompt','Kanit','Athiti','Sriracha','Itim'],
+  thBody:['Taviraj','Trirong','Sarabun','Noto Sans Thai','Noto Serif Thai','Prompt','Kanit','Mitr','Athiti','Niramit','K2D','Krub','Bai Jamjuree','Chakra Petch','Mali']};
+const FONT_FALLBACK={latin:'Didot,"Times New Roman",serif',script:'cursive',thDisplay:'Tahoma,serif',thBody:'Tahoma,sans-serif'};
+const FLOWER_SETS={
+  wisteria:['#cdb9df','#ad91c8','#9273b0','#b79fd1','#7d609c','#dccdea'],
+  sakura:['#f9d3dc','#f4b6c5','#ef9fb4','#fbe3e8','#e98aa2','#fde9ee'],
+  white:['#ffffff','#f6f1e7','#ece4d4','#fbf8f1','#e3d8c3','#f3eee4'],
+  blue:['#c9d8f0','#a9c0e6','#8eaadb','#d9e4f5','#7b97cc','#e6edf8'],
+  golden:['#fbe7a1','#f7d56b','#f2c84b','#fcefc4','#e9b730','#fff4d6']};
+const hexOk=c=>/^#[0-9a-f]{6}$/i.test(String(c||''));
+const num=(v,lo,hi,d)=>{v=Number(v);return isFinite(v)?Math.min(hi,Math.max(lo,v)):d;};
+function theme(D){
+  const T=(D&&D.theme)||{},Z=THEME_DEFAULT,o={colors:{},fonts:{},sizes:{},bg:{}};
+  for(const k in Z.colors)o.colors[k]=hexOk(T.colors&&T.colors[k])?T.colors[k]:Z.colors[k];
+  for(const k in Z.fonts){const f=T.fonts&&T.fonts[k];o.fonts[k]=FONT_ROLES[k].includes(f)?f:Z.fonts[k];}
+  for(const k in Z.sizes)o.sizes[k]=num(T.sizes&&T.sizes[k],70,150,Z.sizes[k]);
+  const b=T.bg||{};o.bg={type:['paper','plain','image'].includes(b.type)?b.type:Z.bg.type,image:String(b.image||''),opacity:num(b.opacity,5,100,Z.bg.opacity)};
+  o.flowers=FLOWER_SETS[T.flowers]?T.flowers:Z.flowers;
+  return o;
+}
+function themeVars(T){
+  let v='';for(const k in COLOR_VARS)v+=`${COLOR_VARS[k]}:${T.colors[k]};`;
+  v+=`--f-latin:"${T.fonts.latin}",${FONT_FALLBACK.latin};--f-script:"${T.fonts.script}",${FONT_FALLBACK.script};`;
+  v+=`--f-th-display:"${T.fonts.thDisplay}","${T.fonts.thBody}",${FONT_FALLBACK.thDisplay};--f-th:"${T.fonts.thBody}",${FONT_FALLBACK.thBody};`;
+  v+=`--s-text:${T.sizes.text/100};--s-hero:${T.sizes.hero/100};--s-title:${T.sizes.title/100};--s-names:${T.sizes.names/100};`;
+  const img=T.bg.type==='image'&&/^https:\/\/[^\s"'<>()\\]+$/i.test(T.bg.image)?T.bg.image:'';
+  v+=`--bg-image:${img?`url("${img}")`:'none'};--bg-op:${T.bg.opacity/100};`;
+  return v;
+}
+function fontsHref(T){
+  const fams=[...new Set(Object.values(T.fonts))];
+  return 'https://fonts.googleapis.com/css2?'+fams.map(n=>'family='+n.replace(/ /g,'+')+(FONT_SPEC[n]?':'+FONT_SPEC[n]:'')).join('&')+'&display=swap';
+}
 const LIBS=['gsap/3.12.5/gsap.min.js','gsap/3.12.5/ScrollTrigger.min.js','qrcode-generator/1.4.4/qrcode.min.js']
   .map(p=>`<script src="https://cdnjs.cloudflare.com/ajax/libs/${p}"></script>`).join('\n');
 const ICONS={monk:'พระสงฆ์ / ตักบาตร',khanmak:'ขันหมาก / บายศรี',couple:'บ่าวสาว / รับไหว้',food:'อาหาร',none:'ไม่มีไอคอน'};
@@ -18,9 +67,10 @@ const bkk=local=>{const d=new Date(String(local||'')+':00+07:00');return isNaN(d
 const TH_MONTHS=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 const EN_MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const TH_DAYS=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+const EN_DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 /* day, month and weekday as they are in Thailand */
 function dateParts(D){const d=bkk(D.weddingAt);if(!d)return null;const t=new Date(+d+7*36e5);
-  return{day:t.getUTCDate(),mTh:TH_MONTHS[t.getUTCMonth()],mEn:EN_MONTHS[t.getUTCMonth()],ce:t.getUTCFullYear(),be:t.getUTCFullYear()+543,wd:TH_DAYS[t.getUTCDay()]};}
+  return{day:t.getUTCDate(),mTh:TH_MONTHS[t.getUTCMonth()],mEn:EN_MONTHS[t.getUTCMonth()],ce:t.getUTCFullYear(),be:t.getUTCFullYear()+543,wd:TH_DAYS[t.getUTCDay()],wdEn:EN_DAYS[t.getUTCDay()]};}
 const calStamp=d=>d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
 function calUrl(D){const a=bkk(D.weddingAt);if(!a)return '';const b=bkk(D.calendarEnd)||new Date(+a+6*36e5);
   return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(D.calendarTitle||D.title)+'&dates='+calStamp(a)+'/'+calStamp(b)+'&location='+encodeURIComponent(String(D.address||'').replace(/\n/g,' '));}
@@ -101,9 +151,9 @@ function markup(D){
     <div class="amp"><i class="tap3d">&amp;</i></div>
     <div class="nm groom">${esc(D.groomName)}<span>${esc(D.groomNick)}</span></div>
     ${dp?`<div class="cal3d" aria-label="${esc(D.dateThai)}">
-      <div class="tilewrap"><button type="button" class="tile3d" aria-label="วันที่ ${dp.day} วัน${esc(dp.wd)}"><span class="face front"><small>วันที่</small><b>${dp.day}</b></span><span class="face back"><small>วัน</small><b class="th">${esc(dp.wd)}</b></span></button></div>
+      <div class="tilewrap"><button type="button" class="tile3d" aria-label="วันที่ ${dp.day} วัน${esc(dp.wd)}"><span class="face front"><small>วันที่</small><b>${dp.day}</b></span><span class="face back"><b class="en">${esc(dp.wdEn)}</b><b class="day">${dp.day}</b></span></button></div>
       <div class="tilewrap"><button type="button" class="tile3d" aria-label="เดือน${esc(dp.mTh)}"><span class="face front"><small>เดือน</small><b class="th">${esc(dp.mTh)}</b></span><span class="face back"><small>Month</small><b class="en">${esc(dp.mEn)}</b></span></button></div>
-      <div class="tilewrap"><button type="button" class="tile3d" aria-label="พ.ศ. ${dp.be}"><span class="face front"><small>พ.ศ.</small><b class="yr">${dp.be}</b></span><span class="face back"><small>ค.ศ.</small><b class="yr">${dp.ce}</b></span></button></div>
+      <div class="tilewrap"><button type="button" class="tile3d" aria-label="พ.ศ. ${dp.be}"><span class="face front"><small>พ.ศ.</small><b class="yr">${dp.be}</b></span><span class="face back"><small>Year</small><b class="yr">${dp.ce}</b></span></button></div>
     </div>
     <div class="tap-hint">↻ แตะการ์ดวันที่เพื่อพลิก</div>`:''}
     <div class="wdate rv">${esc(D.dateThai)}</div>
@@ -203,7 +253,7 @@ function markup(D){
 /* A complete page. base = path back to the site root ('./' or '../') */
 function htmlPage(D,{base='./',admin=false}={}){
   return `<!doctype html>
-<html lang="th">
+<html lang="th" data-bg="${theme(D).bg.type}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -213,8 +263,11 @@ function htmlPage(D,{base='./',admin=false}={}){
 <meta property="og:description" content="${esc(D.dateThai)}">
 <meta name="theme-color" content="#7f8f72">
 ${admin?'<meta name="robots" content="noindex">\n':''}<link rel="icon" href="${base}assets/monogram.png">
-${FONTS}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link id="theme-fonts" rel="stylesheet" href="${esc(fontsHref(theme(D)))}">
 <link rel="stylesheet" href="${base}app.css">
+<style id="theme-vars">:root{${themeVars(theme(D))}}</style>
 </head>
 <body>
 <div id="app">${markup(D)}</div>
@@ -245,6 +298,14 @@ const ASSETS={monogram:'monogram.png',monk:'ic-monk.png',khanmak:'ic-khanmak.png
 for(const k in ASSETS)ASSETS[k]=BASE+'assets/'+ASSETS[k];
 if(G){gsap.registerPlugin(ScrollTrigger);ScrollTrigger.config({ignoreMobileResize:true});}
 
+/* Apply a theme to the running page (instant, used by the card and the admin preview) */
+function applyTheme(T){
+  const st=document.getElementById('theme-vars');if(st)st.textContent=':root{'+themeVars(T)+'}';
+  document.documentElement.dataset.bg=T.bg.type;
+  const l=document.getElementById('theme-fonts'),href=fontsHref(T);if(l&&l.getAttribute('href')!==href)l.setAttribute('href',href);
+  clearTimeout(applyTheme.t);if(window.ScrollTrigger)applyTheme.t=setTimeout(()=>ScrollTrigger.refresh(),400);
+}
+
 /* ---------- talking to the Google Apps Script web app ---------- */
 async function call(url,opts){
   const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),20000);
@@ -260,7 +321,7 @@ const CACHE_KEY='card-data-v1';
 let DATA=(ls.get(CACHE_KEY)||{}).data||BUILT;
 /* ---------- illustrations (seeded so every guest sees the same flowers) ---------- */
 let seed=19;const rnd=()=>(seed=seed*16807%2147483647)/2147483647;
-const WC=['#cdb9df','#ad91c8','#9273b0','#b79fd1','#7d609c','#dccdea'];
+let WC=FLOWER_SETS.wisteria;
 const LC=['#7f9170','#6f8262','#93a584','#8a9b79'];
 const f=n=>n.toFixed(1);
 function cluster(x,y,len,w){
@@ -323,10 +384,10 @@ function villa(el){
   el.innerHTML=s;
 }
 function valance(el){
-  let s=`<rect x="0" y="0" width="440" height="18" fill="#efe3d6"/><rect x="0" y="16" width="440" height="2" fill="#b6976a" opacity=".6"/>`;
+  let s=`<rect x="0" y="0" width="440" height="18" style="fill:var(--linen)"/><rect x="0" y="16" width="440" height="2" fill="#b6976a" opacity=".6"/>`;
   for(let i=0;i<4;i++){const a=i*110,b=a+110,m=a+55;
-    s+=`<path d="M${a} 16Q${m} 92 ${b} 16Z" fill="#ecdfd1"/>`;
-    for(let k=1;k<5;k++)s+=`<path d="M${a+6} 18Q${m} ${18+k*16} ${b-6} 18" stroke="#d3c0ab" stroke-width="1" fill="none"/>`;
+    s+=`<path d="M${a} 16Q${m} 92 ${b} 16Z" style="fill:var(--linen)"/>`;
+    for(let k=1;k<5;k++)s+=`<path d="M${a+6} 18Q${m} ${18+k*16} ${b-6} 18" stroke="rgba(0,0,0,.09)" stroke-width="1" fill="none"/>`;
     for(let t=0;t<=1.0001;t+=1/14){const x=(1-t)*(1-t)*a+2*(1-t)*t*m+t*t*b,y=(1-t)*(1-t)*16+2*(1-t)*t*92+t*t*16;s+=`<circle cx="${f(x)}" cy="${f(y-1)}" r="2.6" fill="url(#pearl)"/>`;}
   }
   for(let i=0;i<=4;i++){const x=i*110;s+=`<path d="M${x} 14v26" stroke="#b6976a" stroke-width="1.5"/><path d="M${x-5} 40h10l-2 16h-6Z" fill="#c9ad7c"/>`;}
@@ -354,7 +415,7 @@ function petals(){
   if(reduce)return;
   const cv=$('#petals');if(!cv)return;const cx=cv.getContext('2d');let W,H,d;
   const size=()=>{d=Math.min(2,devicePixelRatio||1);W=cv.width=innerWidth*d;H=cv.height=innerHeight*d;};size();addEventListener('resize',size);
-  const cols=['#cdb9df','#ad91c8','#f4b6bc','#e7b3b5','#dccdea'];
+  const cols=[WC[0],WC[1],'#f4b6bc','#e7b3b5',WC[5]];
   const mk=init=>({x:Math.random()*W,y:init?-Math.random()*H*.8:-20*d,z:.55+Math.random()*.8,vx:(Math.random()-.5)*.5,vy:.7+Math.random()*.8,a:Math.random()*6.3,va:(Math.random()-.5)*.05,p:Math.random()*6.3,vp:.04+Math.random()*.05,c:cols[(Math.random()*cols.length)|0]});
   const P=Array.from({length:24},()=>mk(true));const end=performance.now()+9000;
   (function draw(t){cx.clearRect(0,0,W,H);let alive=0;
@@ -370,7 +431,9 @@ function petals(){
 let cdTimer=0,gateTimer=0,GATE='closed',PENDING=null;
 function init(D,{preview=false}={}){
   seed=19;
-  $$('[data-asset]').forEach(img=>{const a=ASSETS[img.dataset.asset];if(a)img.src=a;});
+  const TT=theme(D);WC=FLOWER_SETS[TT.flowers];applyTheme(TT);
+  const logo=safeUrl(D.monogramUrl);
+  $$('[data-asset]').forEach(img=>{const k=img.dataset.asset,a=k==='monogram'&&logo?logo:ASSETS[k];if(a)img.src=a;});
   villa($('#villa'));valance($('#valance'));
   garland($('#gWelcome'),{h:170,clusters:13});
   garland($('#gCard'),{h:130,clusters:11,roses:4,sag:8});
@@ -636,7 +699,7 @@ const ss={get(k){try{return JSON.parse(sessionStorage.getItem(k)||'null')}catch(
 let draft=null,password=ss.get(PW_KEY),panel=null,pvBar=null;
 
 const FIELDS=[
-  ['หน้าแรก',[['nameLatin1','ชื่อภาษาอังกฤษ บรรทัดที่ 1'],['nameLatin2','ชื่อภาษาอังกฤษ บรรทัดที่ 2'],['nicknames','ชื่อเล่น'],['heroDate','วันที่บนหน้าแรก'],['heroEyebrow','ข้อความเล็กด้านบน'],['monogramText','อักษรย่อบนตราประทับซองจดหมาย'],['title','ชื่อการ์ด (แสดงบนแท็บเบราว์เซอร์)']]],
+  ['หน้าแรก',[['nameLatin1','ชื่อภาษาอังกฤษ บรรทัดที่ 1'],['nameLatin2','ชื่อภาษาอังกฤษ บรรทัดที่ 2'],['nicknames','ชื่อเล่น'],['heroDate','วันที่บนหน้าแรก'],['heroEyebrow','ข้อความเล็กด้านบน'],['monogramText','อักษรย่อบนตราประทับซองจดหมาย'],['title','ชื่อการ์ด (แสดงบนแท็บเบราว์เซอร์)'],['monogramUrl','ลิงก์รูปโลโก้ (ไม่บังคับ)','url','ว่างไว้ = ใช้โลโก้เดิม ใส่ลิงก์รูป PNG พื้นใสที่ขึ้นต้นด้วย https']]],
   ['วันและเวลา',[['weddingAt','วันเวลาเริ่มงาน','datetime-local','ใช้กับนับถอยหลังและปฏิทิน เมื่อบันทึกแล้ว รหัสผ่านหน้านี้จะเป็นวันแต่งงาน (วว ดด ปปปป) ถ้าเว้นว่าง รหัสผ่านคือรหัสเริ่มต้น'],['calendarEnd','เวลาจบงาน (สำหรับปฏิทิน)','datetime-local'],['countdownNote','ข้อความใต้นับถอยหลัง'],['dateThai','วันที่แบบเต็ม (ภาษาไทย)']]],
   ['ยินดีต้อนรับ',[['welcomeScript','ข้อความตัวเขียน (ภาษาอังกฤษ)'],['welcomeTitle','หัวข้อ'],['welcomeText','ข้อความ','textarea']]],
   ['ครอบครัวและบ่าวสาว',[['brideParents','บิดา–มารดาฝ่ายเจ้าสาว','textarea'],['groomParents','บิดา–มารดาฝ่ายเจ้าบ่าว','textarea'],['inviteText','ข้อความเรียนเชิญ','textarea'],['brideName','ชื่อ-นามสกุลเจ้าสาว'],['brideNick','ชื่อเล่นเจ้าสาว'],['groomName','ชื่อ-นามสกุลเจ้าบ่าว'],['groomNick','ชื่อเล่นเจ้าบ่าว']]],
@@ -709,7 +772,7 @@ function timelineBox(){
       ]));
     });
     list.append(el('button',{class:'mini',type:'button',text:'+ เพิ่มช่วงเวลา',onclick:()=>{draft.timeline.push({icon:'none',time:'',text:''});save();draw();}}));
-  };draw();return box;
+  };draw();box.append(resetRow('กำหนดการ',()=>{draft.timeline=clone(BUILT.timeline||[]);}));return box;
 }
 function colorsBox(){
   const box=el('fieldset',{},[el('legend',{text:'สีชุด (Dress code)'})]);
@@ -719,15 +782,85 @@ function colorsBox(){
       inp.addEventListener('input',()=>{draft.colors[i]=inp.value;ss.set(DRAFT_KEY,draft);});
       wrap.append(el('div',{class:'c'},[inp,el('button',{type:'button',text:'ลบ',onclick:()=>{draft.colors.splice(i,1);ss.set(DRAFT_KEY,draft);draw();}})]));});
     if(draft.colors.length<9)wrap.append(el('button',{class:'mini',type:'button',text:'+ เพิ่มสี',onclick:()=>{draft.colors.push('#e8d5f0');ss.set(DRAFT_KEY,draft);draw();}}));
-  };draw();return box;
+  };draw();box.append(resetRow('สีชุด',()=>{draft.colors=clone(BUILT.colors||[]);}));return box;
 }
+/* ---------- look & feel controls ---------- */
+const COLOR_LABELS=[['paper','พื้นการ์ด'],['paper2','พื้นด้านบนหน้าแรก'],['card','กล่องข้อความ / การ์ดพิธี'],['backdrop','พื้นนอกการ์ด (จอใหญ่)'],['ink','ตัวอักษรหลัก'],['inkSoft','ตัวอักษรรอง'],
+  ['gold','เส้นตกแต่ง / ทอง'],['rose','สีเน้น (ชื่อเล่น เวลา)'],['sage','ประตูหน้าแรก / การ์ดวันที่'],['sageDeep','ปุ่ม'],['linen','ผ้าม่าน']];
+const PRESETS=[
+  ['เขียวเซจ (ตั้งต้น)',THEME_DEFAULT.colors],
+  ['กรมท่า & ทอง',{paper:'#f4f1ea',paper2:'#e6e2d6',card:'#fbf9f4',backdrop:'#d9d6cc',ink:'#1f2a44',inkSoft:'#5d6577',gold:'#b8964f',rose:'#8c2f39',sage:'#2b3a5c',sageDeep:'#1f2a44',linen:'#e9e4d6'}],
+  ['ชมพูพาสเทล',{paper:'#fbf1f1',paper2:'#f6e3e4',card:'#fff8f8',backdrop:'#efdfe0',ink:'#4a3a3d',inkSoft:'#8a7477',gold:'#c79a8b',rose:'#c0566a',sage:'#d99aa5',sageDeep:'#b56576',linen:'#f6e6e6'}],
+  ['ฟ้าหม่น',{paper:'#f1f4f6',paper2:'#e2e8ec',card:'#f8fafb',backdrop:'#dde3e7',ink:'#2f3a44',inkSoft:'#6b7781',gold:'#9fb0bd',rose:'#5b7a99',sage:'#7d97ad',sageDeep:'#4f6b85',linen:'#e6ebef'}],
+  ['ไวน์แดง',{paper:'#f7efe9',paper2:'#ecdcd2',card:'#fbf6f2',backdrop:'#e3d3c8',ink:'#3d1f24',inkSoft:'#7a5a5e',gold:'#b08a5a',rose:'#7b1e2e',sage:'#7b1e2e',sageDeep:'#5e1622',linen:'#efe0d6'}]];
+const FLOWER_LABELS=[['wisteria','วิสทีเรียม่วง'],['sakura','ซากุระชมพู'],['white','ดอกไม้ขาว'],['blue','ฟ้าคราม'],['golden','ราชพฤกษ์เหลือง']];
+const SIZE_LABELS=[['text','ตัวอักษรทั้งการ์ด'],['hero','ชื่อบนหน้าแรก'],['title','หัวข้อแต่ละส่วน'],['names','ชื่อบ่าวสาว']];
+const ROLE_LABELS=[['latin','ชื่อและหัวข้อภาษาอังกฤษ'],['script','ตัวเขียน (& และคำลงท้าย)'],['thDisplay','หัวข้อและชื่อภาษาไทย'],['thBody','เนื้อหาภาษาไทย']];
+
+/* re-draw the editor in place, keeping where the owner was scrolled */
+function redrawKeep(msg){const y=panel.scrollTop;renderEditor(msg);panel.scrollTop=y;}
+function resetRow(label,fn){
+  return el('div',{class:'reset-row'},el('button',{class:'reset',type:'button',text:'↺ รีเซ็ต'+label,onclick:()=>{fn();ss.set(DRAFT_KEY,draft);applyTheme(theme(draft));redrawKeep('รีเซ็ต'+label+'แล้ว ยังไม่ได้บันทึก');}}));
+}
+const dots=cols=>el('span',{class:'dots'},cols.map(c=>{const i=el('i');i.style.background=c;return i;}));
+function themeBoxes(){
+  const T=draft.theme,changed=()=>{ss.set(DRAFT_KEY,draft);applyTheme(T);};
+  // colours
+  const colors=el('fieldset',{},[el('legend',{text:'สี'}),el('div',{class:'hint',text:'เลือกชุดสีสำเร็จรูป แล้วค่อยปรับทีละสีได้'})]);
+  const pr=el('div',{class:'presets'});
+  PRESETS.forEach(([name,c])=>pr.append(el('button',{class:'preset',type:'button','aria-pressed':String(same(c,T.colors)),onclick:()=>{T.colors={...c};changed();redrawKeep('ใช้ชุดสี '+name+' แล้ว');}},[dots([c.paper,c.ink,c.gold,c.rose,c.sage]),el('span',{text:name})])));
+  const grid=el('div',{class:'cgrid'});
+  COLOR_LABELS.forEach(([k,label])=>{const inp=el('input',{type:'color',id:'tc-'+k});inp.value=T.colors[k];
+    inp.addEventListener('input',()=>{T.colors[k]=inp.value;changed();});
+    grid.append(el('label',{class:'citem',for:'tc-'+k},[inp,el('span',{text:label})]));});
+  colors.append(pr,grid,resetRow('สี',()=>{draft.theme.colors={...THEME_DEFAULT.colors};}));
+  // fonts
+  const fonts=el('fieldset',{},[el('legend',{text:'ฟอนต์'})]);
+  ROLE_LABELS.forEach(([role,label])=>{const sel=el('select',{id:'tf-'+role});
+    FONT_ROLES[role].forEach(n=>{const o=el('option',{value:n,text:n});if(T.fonts[role]===n)o.selected=true;sel.append(o);});
+    sel.addEventListener('change',()=>{T.fonts[role]=sel.value;changed();});
+    fonts.append(el('div',{},[el('label',{for:'tf-'+role,text:label}),sel]));});
+  fonts.append(el('div',{class:'font-sample','aria-hidden':'true'},[el('div',{class:'l',text:(draft.nameLatin1||'Bride')+' & '+(draft.nameLatin2||'Groom')}),el('div',{class:'s',text:'See you there'}),el('div',{class:'d',text:draft.brideName||'ชื่อเจ้าสาว'}),el('div',{class:'b',text:'มีความยินดีเรียนเชิญท่านเพื่อเป็นเกียรติ'})]),
+    resetRow('ฟอนต์',()=>{draft.theme.fonts={...THEME_DEFAULT.fonts};}));
+  // sizes
+  const sizes=el('fieldset',{},[el('legend',{text:'ขนาดตัวอักษร'})]);
+  SIZE_LABELS.forEach(([k,label])=>{const r=el('input',{type:'range',min:'80',max:'130',step:'5',id:'ts-'+k});r.value=T.sizes[k];
+    const out=el('output',{for:'ts-'+k,text:T.sizes[k]+'%'});
+    r.addEventListener('input',()=>{T.sizes[k]=Number(r.value);out.textContent=r.value+'%';changed();});
+    sizes.append(el('label',{for:'ts-'+k,text:label}),el('div',{class:'range'},[r,out]));});
+  sizes.append(resetRow('ขนาด',()=>{draft.theme.sizes={...THEME_DEFAULT.sizes};}));
+  // background
+  const bg=el('fieldset',{},[el('legend',{text:'พื้นหลังการ์ด'})]);
+  const type=el('select',{id:'tb-type'});[['paper','ลายกระดาษ'],['plain','สีเรียบ'],['image','รูปภาพจากลิงก์']].forEach(([v,t])=>{const o=el('option',{value:v,text:t});if(T.bg.type===v)o.selected=true;type.append(o);});
+  const img=el('input',{type:'url',id:'tb-img',placeholder:'https://…/background.jpg'});img.value=T.bg.image;
+  const op=el('input',{type:'range',min:'5',max:'100',step:'5',id:'tb-op'});op.value=T.bg.opacity;
+  const opOut=el('output',{for:'tb-op',text:T.bg.opacity+'%'});
+  const imgBox=el('div',{},[el('label',{for:'tb-img',text:'ลิงก์รูปพื้นหลัง'}),img,el('div',{class:'hint',text:'ใช้ลิงก์ของไฟล์รูปโดยตรง (ลงท้าย .jpg หรือ .png) ลิงก์จาก Google Drive จะไม่ขึ้นรูป'}),
+    el('label',{for:'tb-op',text:'ความชัดของรูป'}),el('div',{class:'range'},[op,opOut])]);
+  imgBox.hidden=T.bg.type!=='image';
+  type.addEventListener('change',()=>{T.bg.type=type.value;imgBox.hidden=type.value!=='image';changed();});
+  img.addEventListener('input',()=>{T.bg.image=img.value.trim();changed();});
+  op.addEventListener('input',()=>{T.bg.opacity=Number(op.value);opOut.textContent=op.value+'%';changed();});
+  bg.append(el('div',{class:'hint',text:'สีพื้นการ์ดเปลี่ยนได้ที่หัวข้อ "สี"'}),el('label',{for:'tb-type',text:'แบบพื้นหลัง'}),type,imgBox,
+    resetRow('พื้นหลัง',()=>{draft.theme.bg={...THEME_DEFAULT.bg};}));
+  // flowers
+  const fl=el('fieldset',{},[el('legend',{text:'โทนดอกไม้'}),el('div',{class:'hint',text:'สีพวงดอกไม้ที่ห้อยตามการ์ดและบนวิลล่า เห็นผลเมื่อกด "ดูตัวอย่าง"'})]);
+  const row=el('div',{class:'flower-row'});
+  FLOWER_LABELS.forEach(([k,label])=>row.append(el('button',{class:'flower',type:'button','aria-pressed':String(T.flowers===k),onclick:()=>{T.flowers=k;changed();redrawKeep('เปลี่ยนโทนดอกไม้เป็น'+label+'แล้ว');}},[dots(FLOWER_SETS[k].slice(0,4)),el('span',{text:label})])));
+  fl.append(row,resetRow('โทนดอกไม้',()=>{draft.theme.flowers=THEME_DEFAULT.flowers;}));
+  return [colors,fonts,sizes,bg,fl];
+}
+
 function validate(D){
   if(D.weddingAt&&!bkk(D.weddingAt))return 'กรุณาใส่วันเวลาเริ่มงานให้ครบ หรือเว้นว่างไว้';
   if(D.mapsUrl&&!safeUrl(D.mapsUrl))return 'ลิงก์ Google Maps ต้องขึ้นต้นด้วย https://';
+  if(D.monogramUrl&&!safeUrl(D.monogramUrl))return 'ลิงก์รูปโลโก้ต้องขึ้นต้นด้วย https://';
+  const T=D.theme;if(T&&T.bg&&T.bg.type==='image'&&!/^https:\/\/[^\s"'<>()\\]+$/i.test(T.bg.image||''))return 'ใส่ลิงก์รูปพื้นหลังที่ขึ้นต้นด้วย https:// หรือเลือกพื้นหลังแบบอื่น';
   return '';
 }
 function renderEditor(msg,isErr){
   if(!draft){const saved=ss.get(DRAFT_KEY);draft=saved&&!same(saved,DATA)?saved:clone(DATA);}
+  draft.theme=theme(draft);
   const restored=!same(draft,DATA);
   panel.innerHTML='';
   const inner=el('div',{class:'adm-in'});
@@ -736,13 +869,18 @@ function renderEditor(msg,isErr){
   const status=el('div',{class:'status'+(isErr?' err':''),role:'status',id:'adm-status'});
   if(msg)status.textContent=msg;else if(restored)status.textContent='มีการแก้ไขที่ยังไม่ได้บันทึก';else status.hidden=true;
   inner.append(status);
+  inner.append(el('h2',{class:'adm-sec'},['หน้าตาการ์ด',el('small',{text:'เปลี่ยนแล้วเห็นผลบนการ์ดทันที กด "ดูตัวอย่าง" เพื่อดูเต็มจอ'})]));
+  themeBoxes().forEach(b=>inner.append(b));
+  inner.append(el('h2',{class:'adm-sec'},['ข้อความบนการ์ด',el('small',{text:'ปุ่มรีเซ็ตแต่ละส่วนจะคืนค่าเป็นข้อความตั้งต้นของการ์ด'})]));
   FIELDS.forEach(([title,list])=>{
     if(title==='TIMELINE')return inner.append(timelineBox());
     if(title==='COLORS')return inner.append(colorsBox());
-    inner.append(el('fieldset',{},[el('legend',{text:title}),...list.map(([k,l,t,h])=>field(k,l,t,h))]));
+    inner.append(el('fieldset',{},[el('legend',{text:title}),...list.map(([k,l,t,h])=>field(k,l,t,h)),
+      resetRow(title,()=>{list.forEach(([k])=>{if(BUILT[k]===undefined)delete draft[k];else draft[k]=clone(BUILT[k]);});})]));
   });
   inner.append(el('div',{},[
     el('button',{class:'mini del',type:'button',text:'ยกเลิกการแก้ไขทั้งหมด',onclick:()=>{draft=clone(DATA);ss.del(DRAFT_KEY);rerender(DATA);renderEditor('ย้อนกลับเป็นข้อมูลที่บันทึกล่าสุดแล้ว');}}),' ',
+    el('button',{class:'mini del',type:'button',text:'คืนค่าตั้งต้นทั้งการ์ด',onclick:()=>{draft=clone(BUILT);delete draft.theme;draft.theme=theme(draft);ss.set(DRAFT_KEY,draft);applyTheme(draft.theme);renderEditor('คืนค่าตั้งต้นทั้งการ์ดแล้ว ยังไม่ได้บันทึก กด "บันทึก" เพื่อใช้จริง');}}),' ',
     el('button',{class:'mini',type:'button',text:'ออกจากระบบ',onclick:()=>{password=null;ss.del(PW_KEY);renderLogin();}})]));
   panel.append(inner);
   panel.append(el('div',{class:'adm-bar'},[
