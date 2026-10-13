@@ -288,7 +288,7 @@ p{margin:0;line-height:1.95}
 }
 
 /* ---------- 3D: calendar tiles ---------- */
-.cal3d{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.45fr) minmax(0,1fr);gap:10px;max-width:350px;margin:30px auto 0}
+.cal3d{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.4fr) minmax(0,1.1fr);gap:10px;max-width:350px;margin:30px auto 0}
 .tilewrap{perspective:800px}
 .tile3d{display:block;width:100%;height:122px;padding:0;border:0;background:none;font:inherit;color:inherit;position:relative;transform-style:preserve-3d;-webkit-transform-style:preserve-3d;transition:transform .9s cubic-bezier(.3,.7,.2,1);cursor:pointer;-webkit-tap-highlight-color:transparent}
 .tile3d.flipped{transform:rotateY(180deg)}
@@ -303,6 +303,7 @@ p{margin:0;line-height:1.95}
 .tile3d b{font-family:var(--f-latin);font-weight:400;font-size:clamp(2rem,10vw,2.7rem);line-height:1;color:var(--ink);font-variant-numeric:tabular-nums}
 .tile3d .back b{color:#fff}
 .tile3d b.th{font-family:var(--f-th-display);font-weight:500;font-size:clamp(1.15rem,5.6vw,1.5rem)}
+.tile3d b.yr{font-size:clamp(1.45rem,6.6vw,1.85rem);letter-spacing:.02em}
 .tile3d b.en{font-size:clamp(1.05rem,5vw,1.35rem);font-style:italic}
 .tap-hint{font-size:.78rem;color:var(--ink-soft);margin-top:12px}
 

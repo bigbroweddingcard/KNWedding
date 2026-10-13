@@ -103,7 +103,7 @@ function markup(D){
     ${dp?`<div class="cal3d" aria-label="${esc(D.dateThai)}">
       <div class="tilewrap"><button type="button" class="tile3d" aria-label="วันที่ ${dp.day} วัน${esc(dp.wd)}"><span class="face front"><small>วันที่</small><b>${dp.day}</b></span><span class="face back"><small>วัน</small><b class="th">${esc(dp.wd)}</b></span></button></div>
       <div class="tilewrap"><button type="button" class="tile3d" aria-label="เดือน${esc(dp.mTh)}"><span class="face front"><small>เดือน</small><b class="th">${esc(dp.mTh)}</b></span><span class="face back"><small>Month</small><b class="en">${esc(dp.mEn)}</b></span></button></div>
-      <div class="tilewrap"><button type="button" class="tile3d" aria-label="พ.ศ. ${dp.be}"><span class="face front"><small>พ.ศ.</small><b>${dp.be}</b></span><span class="face back"><small>ค.ศ.</small><b>${dp.ce}</b></span></button></div>
+      <div class="tilewrap"><button type="button" class="tile3d" aria-label="พ.ศ. ${dp.be}"><span class="face front"><small>พ.ศ.</small><b class="yr">${dp.be}</b></span><span class="face back"><small>ค.ศ.</small><b class="yr">${dp.ce}</b></span></button></div>
     </div>
     <div class="tap-hint">↻ แตะการ์ดวันที่เพื่อพลิก</div>`:''}
     <div class="wdate rv">${esc(D.dateThai)}</div>
