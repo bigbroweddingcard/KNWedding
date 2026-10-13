@@ -15,13 +15,19 @@ const br=s=>esc(s).replace(/\n/g,'<br>');
 const safeUrl=u=>{u=String(u||'').trim();return /^https:\/\/[^\s"'<>]+$/i.test(u)?u:'';};
 const json=o=>JSON.stringify(o).replace(/</g,'\\u003c');
 const bkk=local=>{const d=new Date(String(local||'')+':00+07:00');return isNaN(d)?null:d;};
+const TH_MONTHS=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const EN_MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const TH_DAYS=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+/* day, month and weekday as they are in Thailand */
+function dateParts(D){const d=bkk(D.weddingAt);if(!d)return null;const t=new Date(+d+7*36e5);
+  return{day:t.getUTCDate(),mTh:TH_MONTHS[t.getUTCMonth()],mEn:EN_MONTHS[t.getUTCMonth()],ce:t.getUTCFullYear(),be:t.getUTCFullYear()+543,wd:TH_DAYS[t.getUTCDay()]};}
 const calStamp=d=>d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
 function calUrl(D){const a=bkk(D.weddingAt);if(!a)return '';const b=bkk(D.calendarEnd)||new Date(+a+6*36e5);
   return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(D.calendarTitle||D.title)+'&dates='+calStamp(a)+'/'+calStamp(b)+'&location='+encodeURIComponent(String(D.address||'').replace(/\n/g,' '));}
 
 function markup(D){
-  const maps=safeUrl(D.mapsUrl),cal=calUrl(D);
-  const tl=(D.timeline||[]).map(t=>`<div class="ti">${t.icon&&t.icon!=='none'?`<img data-asset="${esc(t.icon)}" alt="">`:'<span></span>'}<span class="dot"></span><div class="tx"><b>${esc(t.time)}</b><span>${br(t.text)}</span></div></div>`).join('');
+  const maps=safeUrl(D.mapsUrl),cal=calUrl(D),dp=dateParts(D);
+  const tl=(D.timeline||[]).map(t=>`<div class="ti">${t.icon&&t.icon!=='none'?`<img class="tap3d" data-asset="${esc(t.icon)}" alt="">`:'<span></span>'}<span class="dot"></span><div class="tx"><b>${esc(t.time)}</b><span>${br(t.text)}</span></div></div>`).join('');
   return `
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><radialGradient id="pearl" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#f3ede5"/><stop offset="1" stop-color="#cfc2b3"/></radialGradient></defs></svg>
 <div id="gate" role="button" tabindex="0" aria-label="แตะเพื่อเปิดการ์ด">
@@ -75,9 +81,9 @@ function markup(D){
     <div class="ttl rv">Countdown</div>
     <div class="ttl-th rv">นับถอยหลังสู่วันแต่งงาน</div>
     <div class="rings">
-      <div class="ring"><svg viewBox="0 0 100 100" class="pr"></svg><div class="num"><b id="cd-d">0</b><small>วัน</small></div></div>
-      <div class="ring"><svg viewBox="0 0 100 100" class="pr"></svg><div class="num"><b id="cd-h">0</b><small>ชั่วโมง</small></div></div>
-      <div class="ring"><svg viewBox="0 0 100 100" class="pr"></svg><div class="num"><b id="cd-m">0</b><small>นาที</small></div></div>
+      <div class="ring"><div class="ring-in tap3d"><svg viewBox="0 0 100 100" class="pr"></svg><div class="num"><b id="cd-d">0</b><small>วัน</small></div></div></div>
+      <div class="ring"><div class="ring-in tap3d"><svg viewBox="0 0 100 100" class="pr"></svg><div class="num"><b id="cd-h">0</b><small>ชั่วโมง</small></div></div></div>
+      <div class="ring"><div class="ring-in tap3d"><svg viewBox="0 0 100 100" class="pr"></svg><div class="num"><b id="cd-m">0</b><small>นาที</small></div></div></div>
     </div>
     <p class="cd-note rv">${esc(D.countdownNote)}</p>
   </section>
@@ -92,13 +98,21 @@ function markup(D){
     </div>
     <p class="lead rv">${br(D.inviteText)}</p>
     <div class="nm bride">${esc(D.brideName)}<span>${esc(D.brideNick)}</span></div>
-    <div class="amp">&amp;</div>
+    <div class="amp"><i class="tap3d">&amp;</i></div>
     <div class="nm groom">${esc(D.groomName)}<span>${esc(D.groomNick)}</span></div>
+    ${dp?`<div class="cal3d" aria-label="${esc(D.dateThai)}">
+      <div class="tilewrap"><button type="button" class="tile3d" aria-label="วันที่ ${dp.day} วัน${esc(dp.wd)}"><span class="face front"><small>วันที่</small><b>${dp.day}</b></span><span class="face back"><small>วัน</small><b class="th">${esc(dp.wd)}</b></span></button></div>
+      <div class="tilewrap"><button type="button" class="tile3d" aria-label="เดือน${esc(dp.mTh)}"><span class="face front"><small>เดือน</small><b class="th">${esc(dp.mTh)}</b></span><span class="face back"><small>Month</small><b class="en">${esc(dp.mEn)}</b></span></button></div>
+      <div class="tilewrap"><button type="button" class="tile3d" aria-label="พ.ศ. ${dp.be}"><span class="face front"><small>พ.ศ.</small><b>${dp.be}</b></span><span class="face back"><small>ค.ศ.</small><b>${dp.ce}</b></span></button></div>
+    </div>
+    <div class="tap-hint">↻ แตะการ์ดวันที่เพื่อพลิก</div>`:''}
     <div class="wdate rv">${esc(D.dateThai)}</div>
   </section>
 
   <section class="sec venue">
-    <div class="vcard">
+    <div class="vflip">
+     <div class="vcard3d${maps?' can-flip':''}" id="vcard3d">
+      <div class="vcard vface vfront">
       <svg class="garland" id="gCard" viewBox="0 0 440 130" aria-hidden="true"></svg>
       <div class="vbody">
         <div class="eyebrow">Ceremony &amp; Reception</div>
@@ -111,8 +125,17 @@ function markup(D){
           ${maps?`<a class="btn solid" href="${esc(maps)}" target="_blank" rel="noopener">เปิดแผนที่ Google Maps</a>`:''}
           ${cal?`<a class="btn" href="${esc(cal)}" target="_blank" rel="noopener">บันทึกลงปฏิทิน</a>`:''}
         </div>
-        ${maps?'<img class="qr" id="qr" alt="QR code แผนที่ไปงาน"><div class="qr-cap">สแกนเพื่อนำทาง</div>':''}
+        ${maps?'<button type="button" class="flip-cta">↻ แตะการ์ดเพื่อดู QR แผนที่</button>':''}
       </div>
+      </div>
+      ${maps?`<div class="vcard vface vback" aria-label="QR code แผนที่">
+        <div class="eyebrow">Find your way</div>
+        <h3>สแกนเพื่อนำทาง</h3>
+        <img class="qr" id="qr" alt="QR code แผนที่ไปงาน">
+        <div class="vaddr">${br(D.address)}</div>
+        <button type="button" class="flip-cta">↻ แตะเพื่อพลิกกลับ</button>
+      </div>`:''}
+     </div>
     </div>
   </section>
 
@@ -170,7 +193,7 @@ function markup(D){
   <section class="sec foot">
     <svg class="swag" id="swag2" viewBox="0 0 440 130" aria-hidden="true"></svg>
     <p class="sorry rv">${esc(D.sorry)}</p>
-    <img class="rv" data-asset="monogram" alt="${esc(D.monogramText)}">
+    <img class="rv mono tap3d" data-asset="monogram" alt="${esc(D.monogramText)}">
     <div class="script rv">${esc(D.closing)}</div>
   </section>
 </main>`;
@@ -322,7 +345,7 @@ function hangers(el,cols){
     c=/^#[0-9a-f]{6}$/i.test(c)?c:'#cccccc';
     const g=i%2? `<path d="M17 27L43 27L57 42L50 50L47 46V124H13V46L10 50L3 42Z" fill="${c}"/><path d="M24 27L30 37L36 27M30 37V120" stroke="rgba(0,0,0,.15)" fill="none"/>`
                : `<path d="M23 28H37L39 52Q52 96 56 128Q30 136 4 128Q8 96 21 52Z" fill="${c}"/><path d="M21 52Q30 56 39 52" stroke="rgba(0,0,0,.15)" fill="none"/>`;
-    return `<div class="hg"><div class="sw"><svg viewBox="0 0 60 140" aria-hidden="true"><path d="M30 3c5 0 7 4 5 7-2 3-5 4-5 8" stroke="#a5864c" stroke-width="2" fill="none"/><path d="M7 31L30 17 53 31Z" stroke="#8b7d72" stroke-width="2" fill="none" stroke-linejoin="round"/>${g}</svg></div></div>`;
+    return `<div class="hg"><div class="sw"><svg class="tap3d" viewBox="0 0 60 140" aria-hidden="true"><path d="M30 3c5 0 7 4 5 7-2 3-5 4-5 8" stroke="#a5864c" stroke-width="2" fill="none"/><path d="M7 31L30 17 53 31Z" stroke="#8b7d72" stroke-width="2" fill="none" stroke-linejoin="round"/>${g}</svg></div></div>`;
   }).join('');
 }
 
@@ -361,6 +384,7 @@ function init(D,{preview=false}={}){
     else{qr.remove();$('.qr-cap')&&$('.qr-cap').remove();}}
 
   initWishes(D);
+  initTaps();
 
   /* countdown */
   const target=bkk(D.weddingAt);let counting=false;
@@ -432,8 +456,8 @@ function init(D,{preview=false}={}){
   gsap.from('.groom',{x:70,opacity:0,ease:'power2.out',scrollTrigger:S('.groom','top 98%','top 62%')});
   gsap.from('.amp',{rotationY:-540,scale:.3,opacity:0,transformPerspective:600,ease:'power2.out',scrollTrigger:S('.amp','top 98%','top 55%')});
 
-  gsap.from('.vcard',{rotationX:55,y:90,opacity:0,transformPerspective:1100,transformOrigin:'50% 100%',ease:'power2.out',scrollTrigger:S('.venue','top 98%','top 30%')});
-  if($$('.btns .btn,.qr').length)gsap.from('.btns .btn,.qr',{y:24,opacity:0,stagger:.12,duration:.8,ease:'power3.out',scrollTrigger:{trigger:'.btns',start:'top 92%',once:true}});
+  gsap.from('.vflip',{opacity:0,scale:.95,y:24,ease:'power1.out',scrollTrigger:S('.venue','top 95%','top 55%')});
+  if($('.cal3d'))gsap.from('.tilewrap',{rotationX:-100,opacity:0,transformOrigin:'50% 0%',transformPerspective:700,stagger:.18,ease:'power1.out',scrollTrigger:S('.cal3d','top 95%','top 60%')});
 
   gsap.fromTo('.tl-line',{scaleY:0},{scaleY:1,ease:'none',scrollTrigger:S('#tl','top 70%','bottom 65%',.4)});
   $$('.ti').forEach(el=>ScrollTrigger.create({trigger:el,start:'top 68%',onEnter:()=>el.classList.add('on'),onLeaveBack:()=>el.classList.remove('on')}));
@@ -539,6 +563,29 @@ async function startWall(mine){
   clearInterval(wall.refresh);wall.refresh=setInterval(()=>{if(wall.visible)loadWishes();},60000);
 }
 function stopWall(){clearInterval(wall.timer);clearInterval(wall.refresh);wall.io&&wall.io.disconnect();const box=$('#w-wall');if(box)box.innerHTML='';}
+
+/* ---------- things guests can tap ---------- */
+function spin(el){el.classList.remove('spun');void el.offsetWidth;el.classList.add('spun');}
+function burst(x,y,n=16){
+  if(!window.gsap||reduce)return;
+  let layer=$('#burst');if(!layer){layer=document.createElement('div');layer.id='burst';document.body.append(layer);}
+  const cols=['#f4b6bc','#e7b3b5','#cdb9df','#ad91c8','#d27f89','#f9e0c7'];
+  for(let i=0;i<n;i++){
+    const p=document.createElement('span');p.className='pt';p.style.left=x+'px';p.style.top=y+'px';p.style.background=cols[i%cols.length];layer.append(p);
+    const a=Math.random()*Math.PI*2,r=60+Math.random()*110;
+    gsap.fromTo(p,{x:0,y:0,z:0,rotationX:0,rotationY:0,scale:.4,opacity:1},
+      {x:Math.cos(a)*r,y:Math.sin(a)*r-40,z:(Math.random()-.5)*300,rotationX:360+Math.random()*540,rotationY:360+Math.random()*540,rotation:Math.random()*180,scale:1,
+       duration:1.3+Math.random()*.6,ease:'power2.out',onComplete:()=>p.remove()});
+    gsap.to(p,{opacity:0,duration:.6,delay:.9+Math.random()*.4});
+  }
+}
+function initTaps(){
+  $$('.tap3d').forEach(el=>el.addEventListener('click',e=>{spin(el);if(el.matches('.mono,.ring-in'))burst(e.clientX,e.clientY,10);}));
+  $$('.tile3d').forEach(t=>t.addEventListener('click',()=>t.classList.toggle('flipped')));
+  const card=$('#vcard3d');
+  if(card&&card.classList.contains('can-flip'))card.addEventListener('click',e=>{if(e.target.closest('a'))return;card.classList.toggle('flipped');});
+  const stage=$('#stage');if(stage)stage.addEventListener('click',e=>burst(e.clientX,e.clientY));
+}
 
 function playSent(name,msg){
   const wf=$('#wishForm'),sent=$('#w-sent');

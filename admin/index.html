@@ -69,9 +69,9 @@
     <div class="ttl rv">Countdown</div>
     <div class="ttl-th rv">นับถอยหลังสู่วันแต่งงาน</div>
     <div class="rings">
-      <div class="ring"><svg viewBox="0 0 100 100" class="pr"></svg><div class="num"><b id="cd-d">0</b><small>วัน</small></div></div>
-      <div class="ring"><svg viewBox="0 0 100 100" class="pr"></svg><div class="num"><b id="cd-h">0</b><small>ชั่วโมง</small></div></div>
-      <div class="ring"><svg viewBox="0 0 100 100" class="pr"></svg><div class="num"><b id="cd-m">0</b><small>นาที</small></div></div>
+      <div class="ring"><div class="ring-in tap3d"><svg viewBox="0 0 100 100" class="pr"></svg><div class="num"><b id="cd-d">0</b><small>วัน</small></div></div></div>
+      <div class="ring"><div class="ring-in tap3d"><svg viewBox="0 0 100 100" class="pr"></svg><div class="num"><b id="cd-h">0</b><small>ชั่วโมง</small></div></div></div>
+      <div class="ring"><div class="ring-in tap3d"><svg viewBox="0 0 100 100" class="pr"></svg><div class="num"><b id="cd-m">0</b><small>นาที</small></div></div></div>
     </div>
     <p class="cd-note rv">ถึงเวลาเริ่มพิธีสงฆ์ 07.09 น.</p>
   </section>
@@ -86,13 +86,21 @@
     </div>
     <p class="lead rv">มีความยินดีเรียนเชิญท่านเพื่อเป็นเกียรติ<br>เนื่องในพิธีมงคลสมรส ระหว่าง</p>
     <div class="nm bride">นางสาวกาญจนาพร ก้านแก้ว<span>(มด)</span></div>
-    <div class="amp">&amp;</div>
+    <div class="amp"><i class="tap3d">&amp;</i></div>
     <div class="nm groom">นายนัฐพงศ์ กุลคง<span>(เต้)</span></div>
+    <div class="cal3d" aria-label="วันเสาร์ที่ 9 มกราคม พ.ศ. 2570">
+      <div class="tilewrap"><button type="button" class="tile3d" aria-label="วันที่ 9 วันเสาร์"><span class="face front"><small>วันที่</small><b>9</b></span><span class="face back"><small>วัน</small><b class="th">เสาร์</b></span></button></div>
+      <div class="tilewrap"><button type="button" class="tile3d" aria-label="เดือนมกราคม"><span class="face front"><small>เดือน</small><b class="th">มกราคม</b></span><span class="face back"><small>Month</small><b class="en">January</b></span></button></div>
+      <div class="tilewrap"><button type="button" class="tile3d" aria-label="พ.ศ. 2570"><span class="face front"><small>พ.ศ.</small><b>2570</b></span><span class="face back"><small>ค.ศ.</small><b>2027</b></span></button></div>
+    </div>
+    <div class="tap-hint">↻ แตะการ์ดวันที่เพื่อพลิก</div>
     <div class="wdate rv">วันเสาร์ที่ 9 มกราคม พ.ศ. 2570</div>
   </section>
 
   <section class="sec venue">
-    <div class="vcard">
+    <div class="vflip">
+     <div class="vcard3d can-flip" id="vcard3d">
+      <div class="vcard vface vfront">
       <svg class="garland" id="gCard" viewBox="0 0 440 130" aria-hidden="true"></svg>
       <div class="vbody">
         <div class="eyebrow">Ceremony &amp; Reception</div>
@@ -105,15 +113,24 @@
           <a class="btn solid" href="https://maps.app.goo.gl/sEE5bxn7qwUFKzGLA" target="_blank" rel="noopener">เปิดแผนที่ Google Maps</a>
           <a class="btn" href="https://calendar.google.com/calendar/render?action=TEMPLATE&amp;text=%E0%B8%87%E0%B8%B2%E0%B8%99%E0%B9%81%E0%B8%95%E0%B9%88%E0%B8%87%E0%B8%87%E0%B8%B2%E0%B8%99%20%E0%B8%A1%E0%B8%94%20%26%20%E0%B9%80%E0%B8%95%E0%B9%89&amp;dates=20270109T000900Z/20270109T070000Z&amp;location=%E0%B8%9A%E0%B9%89%E0%B8%B2%E0%B8%99%E0%B9%80%E0%B8%A5%E0%B8%82%E0%B8%97%E0%B8%B5%E0%B9%88%2027%20%E0%B8%AB%E0%B8%A1%E0%B8%B9%E0%B9%88%206%20%E0%B8%9A%E0%B9%89%E0%B8%B2%E0%B8%99%E0%B8%AA%E0%B8%A3%E0%B8%B0%E0%B8%A2%E0%B8%B2%E0%B8%A2%E0%B8%8A%E0%B8%B5%20%E0%B8%95%E0%B8%B3%E0%B8%9A%E0%B8%A5%E0%B9%80%E0%B8%99%E0%B8%B4%E0%B8%99%E0%B8%9B%E0%B8%AD%20%E0%B8%AD%E0%B8%B3%E0%B9%80%E0%B8%A0%E0%B8%AD%E0%B8%AA%E0%B8%B2%E0%B8%A1%E0%B8%87%E0%B9%88%E0%B8%B2%E0%B8%A1%20%E0%B8%88%E0%B8%B1%E0%B8%87%E0%B8%AB%E0%B8%A7%E0%B8%B1%E0%B8%94%E0%B8%9E%E0%B8%B4%E0%B8%88%E0%B8%B4%E0%B8%95%E0%B8%A3" target="_blank" rel="noopener">บันทึกลงปฏิทิน</a>
         </div>
-        <img class="qr" id="qr" alt="QR code แผนที่ไปงาน"><div class="qr-cap">สแกนเพื่อนำทาง</div>
+        <button type="button" class="flip-cta">↻ แตะการ์ดเพื่อดู QR แผนที่</button>
       </div>
+      </div>
+      <div class="vcard vface vback" aria-label="QR code แผนที่">
+        <div class="eyebrow">Find your way</div>
+        <h3>สแกนเพื่อนำทาง</h3>
+        <img class="qr" id="qr" alt="QR code แผนที่ไปงาน">
+        <div class="vaddr">บ้านเลขที่ 27 หมู่ 6 บ้านสระยายชี<br>ตำบลเนินปอ อำเภอสามง่าม<br>จังหวัดพิจิตร</div>
+        <button type="button" class="flip-cta">↻ แตะเพื่อพลิกกลับ</button>
+      </div>
+     </div>
     </div>
   </section>
 
   <section class="sec timeline">
     <div class="ttl rv">Timeline</div>
     <div class="ttl-th rv">กำหนดการ</div>
-    <div class="tl" id="tl"><span class="tl-line"></span><div class="ti"><img data-asset="monk" alt=""><span class="dot"></span><div class="tx"><b>07.09 น.</b><span>พิธีสงฆ์</span></div></div><div class="ti"><img data-asset="khanmak" alt=""><span class="dot"></span><div class="tx"><b>08.09 น.</b><span>พิธีแห่ขันหมาก<br>พิธีบายศรีสู่ขวัญ</span></div></div><div class="ti"><img data-asset="couple" alt=""><span class="dot"></span><div class="tx"><b>09.09 น.</b><span>พิธีรับไหว้<br>พิธีผูกแขน</span></div></div><div class="ti"><img data-asset="food" alt=""><span class="dot"></span><div class="tx"><b>11.00 น.</b><span>ร่วมรับประทานอาหาร</span></div></div></div>
+    <div class="tl" id="tl"><span class="tl-line"></span><div class="ti"><img class="tap3d" data-asset="monk" alt=""><span class="dot"></span><div class="tx"><b>07.09 น.</b><span>พิธีสงฆ์</span></div></div><div class="ti"><img class="tap3d" data-asset="khanmak" alt=""><span class="dot"></span><div class="tx"><b>08.09 น.</b><span>พิธีแห่ขันหมาก<br>พิธีบายศรีสู่ขวัญ</span></div></div><div class="ti"><img class="tap3d" data-asset="couple" alt=""><span class="dot"></span><div class="tx"><b>09.09 น.</b><span>พิธีรับไหว้<br>พิธีผูกแขน</span></div></div><div class="ti"><img class="tap3d" data-asset="food" alt=""><span class="dot"></span><div class="tx"><b>11.00 น.</b><span>ร่วมรับประทานอาหาร</span></div></div></div>
   </section>
 
   <section class="sec dress">
@@ -164,7 +181,7 @@
   <section class="sec foot">
     <svg class="swag" id="swag2" viewBox="0 0 440 130" aria-hidden="true"></svg>
     <p class="sorry rv">( ขออภัยหากมิได้มาเรียนเชิญด้วยตัวเอง )</p>
-    <img class="rv" data-asset="monogram" alt="KN">
+    <img class="rv mono tap3d" data-asset="monogram" alt="KN">
     <div class="script rv">See you there</div>
   </section>
 </main></div>
