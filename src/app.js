@@ -72,8 +72,16 @@ const EN_DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Satu
 function dateParts(D){const d=bkk(D.weddingAt);if(!d)return null;const t=new Date(+d+7*36e5);
   return{day:t.getUTCDate(),mTh:TH_MONTHS[t.getUTCMonth()],mEn:EN_MONTHS[t.getUTCMonth()],ce:t.getUTCFullYear(),be:t.getUTCFullYear()+543,wd:TH_DAYS[t.getUTCDay()],wdEn:EN_DAYS[t.getUTCDay()]};}
 const calStamp=d=>d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
+/* "lat, lng" from the coordinates field, or from a full Google Maps link that carries them */
+function latLng(D){
+  const pick=t=>{const m=/(-?\d{1,2}\.\d{3,})\s*,\s*(-?\d{1,3}\.\d{3,})/.exec(String(t||''));return m?m[1]+','+m[2]:'';};
+  return pick(D.mapsLatLng)||(/[?&](q|query|ll|destination)=|@-?\d/.test(String(D.mapsUrl||''))?pick(decodeURIComponent(String(D.mapsUrl))):'');
+}
 function calUrl(D){const a=bkk(D.weddingAt);if(!a)return '';const b=bkk(D.calendarEnd)||new Date(+a+6*36e5);
-  return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(D.calendarTitle||D.title)+'&dates='+calStamp(a)+'/'+calStamp(b)+'&location='+encodeURIComponent(String(D.address||'').replace(/\n/g,' '));}
+  const addr=String(D.address||'').replace(/\n/g,' '),ll=latLng(D),maps=safeUrl(D.mapsUrl);
+  /* coordinates pin the exact spot; the address alone only finds the village */
+  const details=[addr,maps?'แผนที่: '+maps:''].filter(Boolean).join('\n');
+  return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(D.calendarTitle||D.title)+'&dates='+calStamp(a)+'/'+calStamp(b)+'&location='+encodeURIComponent(ll||addr)+'&details='+encodeURIComponent(details);}
 
 /* Everything below can be changed at /admin; these are the values used when a card has not set them */
 const DEFAULTS={
@@ -833,7 +841,7 @@ const FIELDS=[
   ['วันและเวลา',[['weddingAt','วันเวลาเริ่มงาน','datetime-local','ใช้กับนับถอยหลังและปฏิทิน เมื่อบันทึกแล้ว รหัสผ่านหน้านี้จะเป็นวันแต่งงาน (วว ดด ปปปป) ถ้าเว้นว่าง รหัสผ่านคือรหัสเริ่มต้น'],['calendarEnd','เวลาจบงาน (สำหรับปฏิทิน)','datetime-local'],['countdownNote','ข้อความใต้นับถอยหลัง'],['dateThai','วันที่แบบเต็ม (ภาษาไทย)']]],
   ['ยินดีต้อนรับ',[['welcomeScript','ข้อความตัวเขียน (ภาษาอังกฤษ)'],['welcomeTitle','หัวข้อ'],['welcomeText','ข้อความ','textarea']]],
   ['ครอบครัวและบ่าวสาว',[['brideParents','บิดา–มารดาฝ่ายเจ้าสาว','textarea'],['groomParents','บิดา–มารดาฝ่ายเจ้าบ่าว','textarea'],['inviteText','ข้อความเรียนเชิญ','textarea'],['brideName','ชื่อ-นามสกุลเจ้าสาว'],['brideNick','ชื่อเล่นเจ้าสาว'],['groomName','ชื่อ-นามสกุลเจ้าบ่าว'],['groomNick','ชื่อเล่นเจ้าบ่าว']]],
-  ['สถานที่',[['venueTitle','หัวข้อ'],['venueDate','วันที่'],['venueTime','เวลา'],['address','ที่อยู่','textarea'],['mapsUrl','ลิงก์ Google Maps','url','QR code บนการ์ดจะสร้างใหม่จากลิงก์นี้'],['calendarTitle','ชื่อกิจกรรมเมื่อแขกบันทึกลงปฏิทิน']]],
+  ['สถานที่',[['venueTitle','หัวข้อ'],['venueDate','วันที่'],['venueTime','เวลา'],['address','ที่อยู่','textarea'],['mapsUrl','ลิงก์ Google Maps','url','QR code บนการ์ดจะสร้างใหม่จากลิงก์นี้'],['mapsLatLng','พิกัด (ละติจูด, ลองจิจูด)','text','ใช้ให้ปุ่มบันทึกลงปฏิทินปักหมุดตรงจุด วิธีหา: เปิด Google Maps กดค้างที่หมุด แล้วคัดลอกตัวเลข เช่น 16.41119, 100.1663'],['calendarTitle','ชื่อกิจกรรมเมื่อแขกบันทึกลงปฏิทิน']]],
   ['TIMELINE'],
   ['Dress code',[['dressTitle','หัวข้อ'],['dressText','คำอธิบาย','textarea']]],
   ['COLORS'],
@@ -1010,6 +1018,7 @@ function themeBoxes(){
 function validate(D){
   if(D.weddingAt&&!bkk(D.weddingAt))return 'กรุณาใส่วันเวลาเริ่มงานให้ครบ หรือเว้นว่างไว้';
   if(D.mapsUrl&&!safeUrl(D.mapsUrl))return 'ลิงก์ Google Maps ต้องขึ้นต้นด้วย https://';
+  if(String(D.mapsLatLng||'').trim()&&!latLng({mapsLatLng:D.mapsLatLng}))return 'พิกัดต้องเป็นตัวเลขแบบ 16.41119, 100.1663';
   if(D.monogramUrl&&!safeUrl(D.monogramUrl))return 'ลิงก์รูปโลโก้ต้องขึ้นต้นด้วย https://';
   for(const [k,name] of [['heroImage','รูปบนหน้าแรก'],['musicUrl','เพลงประกอบ'],['giftQr','รูป QR สำหรับโอน']])if(D[k]&&!safeUrl(D[k]))return 'ลิงก์'+name+'ต้องขึ้นต้นด้วย https://';
   if(lines(D.photos).some(u=>!safeUrl(u)))return 'ลิงก์รูปแกลเลอรีทุกบรรทัดต้องขึ้นต้นด้วย https://';
