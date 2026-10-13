@@ -1,21 +1,19 @@
 (function(){
 /* =====================================================================
-   Wedding card. All visible text comes from the #card-data JSON block;
-   the owner edits it at #admin and the page republishes itself.
+   Wedding card for GitHub Pages.
+   Text comes from the data baked in at build time, refreshed from the
+   Google Apps Script API (config.js). The same API stores guests'
+   blessings in the Google Sheet and the owner's edits made at /admin.
    ===================================================================== */
-const SKEL=':root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}';
-const FONTS='<link rel="preconnect" href="https://fonts.googleapis.com">\n<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;0,500;1,400&family=Pinyon+Script&family=Trirong:wght@300;400;500&family=Taviraj:wght@300;400&display=swap">';
-const SC='scr'+'ipt';
+const FONTS='<link rel="preconnect" href="https://fonts.googleapis.com">\n<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;0,500;1,400&family=Pinyon+Script&family=Trirong:wght@300;400;500&family=Taviraj:wght@300;400&display=swap">';
 const LIBS=['gsap/3.12.5/gsap.min.js','gsap/3.12.5/ScrollTrigger.min.js','qrcode-generator/1.4.4/qrcode.min.js']
-  .map(p=>'<'+SC+' src="https://cdnjs.cloudflare.com/ajax/libs/'+p+'"></'+SC+'>').join('\n');
+  .map(p=>`<script src="https://cdnjs.cloudflare.com/ajax/libs/${p}"></script>`).join('\n');
 const ORIGINAL_MAPS='https://maps.app.goo.gl/sEE5bxn7qwUFKzGLA';
 const ICONS={monk:'พระสงฆ์ / ตักบาตร',khanmak:'ขันหมาก / บายศรี',couple:'บ่าวสาว / รับไหว้',food:'อาหาร',none:'ไม่มีไอคอน'};
 
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const br=s=>esc(s).replace(/\n/g,'<br>');
 const safeUrl=u=>{u=String(u||'').trim();return /^https:\/\/[^\s"'<>]+$/i.test(u)?u:'';};
-/* Only a deployed Google Apps Script web app may receive blessings */
-const scriptUrl=u=>{u=String(u||'').trim();return /^https:\/\/script\.google\.com\/(a\/[\w.-]+\/)?macros\/s\/[\w-]+\/exec$/.test(u)?u:'';};
 const json=o=>JSON.stringify(o).replace(/</g,'\\u003c');
 const bkk=local=>{const d=new Date(String(local||'')+':00+07:00');return isNaN(d)?null:d;};
 const calStamp=d=>d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
@@ -23,7 +21,7 @@ function calUrl(D){const a=bkk(D.weddingAt);if(!a)return '';const b=bkk(D.calend
   return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(D.calendarTitle||D.title)+'&dates='+calStamp(a)+'/'+calStamp(b)+'&location='+encodeURIComponent(String(D.address||'').replace(/\n/g,' '));}
 
 function markup(D){
-  const maps=safeUrl(D.mapsUrl),wish=scriptUrl(D.wishUrl),cal=calUrl(D);
+  const maps=safeUrl(D.mapsUrl),cal=calUrl(D);
   const tl=(D.timeline||[]).map(t=>`<div class="ti">${t.icon&&t.icon!=='none'?`<img data-asset="${esc(t.icon)}" alt="">`:'<span></span>'}<span class="dot"></span><div class="tx"><b>${esc(t.time)}</b><span>${br(t.text)}</span></div></div>`).join('');
   return `
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><radialGradient id="pearl" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#f3ede5"/><stop offset="1" stop-color="#cfc2b3"/></radialGradient></defs></svg>
@@ -142,7 +140,7 @@ function markup(D){
       <div class="front"></div><div class="flap"></div>
       <div class="seal">${esc(D.monogramText)}</div>
     </div>
-    ${wish?`<form class="wish-form" id="wishForm" novalidate>
+    <form class="wish-form" id="wishForm" novalidate>
       <label for="w-name">ชื่อของคุณ</label>
       <input id="w-name" name="name" maxlength="80" autocomplete="name" placeholder="เช่น ป้าแดง">
       <label for="w-rel">เกี่ยวข้องกับบ่าวสาวเป็น <small>(ไม่บังคับ)</small></label>
@@ -152,10 +150,20 @@ function markup(D){
       <div class="w-count" id="w-count">0/500</div>
       ${(D.wishPhrases||[]).length?`<div class="chips" aria-label="ข้อความสำเร็จรูป">${D.wishPhrases.map(p=>`<button type="button" class="chip">${esc(p)}</button>`).join('')}</div>`:''}
       <div class="w-err" id="w-err" role="alert"></div>
-      <a class="btn solid w-send" id="w-send" href="${esc(wish)}" target="_blank" rel="noopener">ส่งคำอวยพร</a>
-      <p class="wish-note" id="w-note">กดส่งแล้วจะเปิดหน้ายืนยันในแท็บใหม่<br>เห็นข้อความขอบคุณ แปลว่าบันทึกเรียบร้อย</p>
-    </form>`
-          :'<span class="btn solid pending">เปิดรับคำอวยพรเร็ว ๆ นี้</span>'}
+      <button type="submit" class="btn solid w-send" id="w-send"><span class="lbl">ส่งคำอวยพร</span><span class="spin" aria-hidden="true"></span></button>
+    </form>
+    <div class="w-sent" id="w-sent" hidden>
+      <div class="w-stage" aria-hidden="true">
+        <div class="w-env"><div class="w-back"></div><div class="w-paper"><em>${esc(D.letterTo)}</em><span id="w-paper-text"></span></div><div class="w-front"></div><div class="w-flap"></div><div class="w-seal">${esc(D.monogramText)}</div></div>
+        <div class="w-hearts"></div>
+      </div>
+      <div class="w-done" role="status">
+        <div class="script">Thank you</div>
+        <h3>ได้รับคำอวยพรแล้ว</h3>
+        <p id="w-thanks"></p>
+        <button type="button" class="mini" id="w-again">เขียนอีกฉบับ</button>
+      </div>
+    </div>
   </section>
 
   <section class="sec foot">
@@ -167,31 +175,65 @@ function markup(D){
 </main>`;
 }
 
-/* The whole published document, rebuilt from data plus the page's own source blocks */
-function shell(D,parts){
-  return '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>'+SKEL+'</style></head><body>\n'
-   +'<title>'+esc(D.title)+'</title>\n'+FONTS+'\n'
-   +'<style id="app-css">'+parts.css+'</style>\n'
-   +'<div id="app">'+markup(D)+'</div>\n'
-   +'<'+SC+' type="application/json" id="card-data">'+json(D)+'</'+SC+'>\n'
-   +'<'+SC+' type="application/json" id="card-assets">'+parts.assets+'</'+SC+'>\n'
-   +LIBS+'\n'
-   +'<'+SC+' id="app-js">'+parts.js+'</'+SC+'>\n'
-   +'</body></html>';
+
+/* A complete page. base = path back to the site root ('./' or '../') */
+function htmlPage(D,{base='./',admin=false}={}){
+  return `<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>${admin?'แก้ไขการ์ด · ':''}${esc(D.title)}</title>
+<meta name="description" content="${esc(D.dateThai)} · ${esc(String(D.address||'').replace(/\n/g,' '))}">
+<meta property="og:title" content="${esc(D.title)}">
+<meta property="og:description" content="${esc(D.dateThai)}">
+<meta name="theme-color" content="#7f8f72">
+${admin?'<meta name="robots" content="noindex">\n':''}<link rel="icon" href="${base}assets/monogram.png">
+${FONTS}
+<link rel="stylesheet" href="${base}app.css">
+</head>
+<body>
+<div id="app">${markup(D)}</div>
+<script type="application/json" id="card-data">${json(D)}</script>
+<script>window.CARD_BASE=${JSON.stringify(base)};window.CARD_ADMIN=${admin?'true':'false'};</script>
+<script src="${base}config.js"></script>
+${LIBS}
+<script src="${base}app.js"></script>
+</body>
+</html>
+`;
 }
 
-if(typeof window==='undefined'){module.exports={shell,markup};return;}
+if(typeof window==='undefined'){module.exports={htmlPage,markup};return;}
 
 /* ===================================================================== browser */
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const G=!!(window.gsap&&window.ScrollTrigger)&&!reduce;
+const BASE=window.CARD_BASE||'./';
+const API=String(window.CARD_API||'').trim();
+const ADMIN=!!window.CARD_ADMIN;
 const readJSON=id=>{try{return JSON.parse(document.getElementById(id).textContent)}catch(e){return null}};
-const DATA=readJSON('card-data')||{};
-const ASSETS=readJSON('card-assets')||{};
-const parts=()=>({css:$('#app-css').textContent,js:$('#app-js').textContent,assets:$('#card-assets').textContent});
+const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+const clone=o=>JSON.parse(JSON.stringify(o));
+const ls={get(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+const ASSETS={monogram:'monogram.png',monk:'ic-monk.png',khanmak:'ic-khanmak.png',couple:'ic-couple.png',food:'ic-food.png',qr:'qr-map.jpg'};
+for(const k in ASSETS)ASSETS[k]=BASE+'assets/'+ASSETS[k];
 if(G){gsap.registerPlugin(ScrollTrigger);ScrollTrigger.config({ignoreMobileResize:true});}
 
+/* ---------- talking to the Google Apps Script web app ---------- */
+async function call(url,opts){
+  const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),20000);
+  try{const r=await fetch(url,{...opts,redirect:'follow',signal:ctl.signal});if(!r.ok)throw new Error('http '+r.status);return await r.json();}
+  finally{clearTimeout(t);}
+}
+/* text/plain body keeps it a simple request, which Apps Script accepts from any site */
+const api=payload=>call(API,{method:'POST',body:JSON.stringify(payload)});
+const apiGet=params=>call(API+'?'+new URLSearchParams(params));
+
+const BUILT=readJSON('card-data')||{};
+const CACHE_KEY='card-data-v1';
+let DATA=(ls.get(CACHE_KEY)||{}).data||BUILT;
 /* ---------- illustrations (seeded so every guest sees the same flowers) ---------- */
 let seed=19;const rnd=()=>(seed=seed*16807%2147483647)/2147483647;
 const WC=['#cdb9df','#ad91c8','#9273b0','#b79fd1','#7d609c','#dccdea'];
@@ -301,7 +343,7 @@ function petals(){
 }
 
 /* ---------- card lifecycle ---------- */
-let cdTimer=0,gateTimer=0;
+let cdTimer=0,gateTimer=0,GATE='closed',PENDING=null;
 function init(D,{preview=false}={}){
   seed=19;
   $$('[data-asset]').forEach(img=>{const a=ASSETS[img.dataset.asset];if(a)img.src=a;});
@@ -318,31 +360,7 @@ function init(D,{preview=false}={}){
     else if(window.qrcode){try{const q=qrcode(0,'M');q.addData(u);q.make();qr.src=q.createDataURL(5,2);}catch(e){qr.remove();}}
     else{qr.remove();$('.qr-cap')&&$('.qr-cap').remove();}}
 
-  /* blessing form: the send link carries the message to the Apps Script web app */
-  const wf=$('#wishForm');
-  if(wf){
-    const wu=scriptUrl(D.wishUrl),nm=$('#w-name'),rl=$('#w-rel'),ms=$('#w-msg'),send=$('#w-send'),err=$('#w-err'),cnt=$('#w-count');
-    const KEY='wish-draft';let id=Math.random().toString(36).slice(2,10)+Date.now().toString(36);
-    try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s){nm.value=s.name||'';rl.value=s.rel||'';ms.value=s.msg||'';if(s.id)id=s.id;}}catch(e){}
-    const sync=()=>{
-      const ok=!!(nm.value.trim()&&ms.value.trim());
-      send.href=wu+'?'+new URLSearchParams({name:nm.value.trim(),rel:rl.value,msg:ms.value.trim(),id}).toString();
-      send.classList.toggle('off',!ok);send.setAttribute('aria-disabled',String(!ok));
-      cnt.textContent=ms.value.length+'/500';
-      if(ok)err.textContent='';
-      try{localStorage.setItem(KEY,JSON.stringify({name:nm.value,rel:rl.value,msg:ms.value,id}))}catch(e){}
-    };
-    nm.addEventListener('input',sync);ms.addEventListener('input',sync);rl.addEventListener('change',sync);
-    wf.addEventListener('submit',e=>e.preventDefault());
-    $$('.chip').forEach(c=>c.addEventListener('click',()=>{ms.value=((ms.value.trim()?ms.value.trim()+' ':'')+c.textContent).slice(0,500);sync();}));
-    send.addEventListener('click',e=>{
-      if(!nm.value.trim()){e.preventDefault();err.textContent='กรุณาใส่ชื่อของคุณ';nm.focus();return;}
-      if(!ms.value.trim()){e.preventDefault();err.textContent='กรุณาเขียนคำอวยพร';ms.focus();return;}
-      sync();
-      $('#w-note').innerHTML='เปิดหน้ายืนยันในแท็บใหม่แล้ว<br>ถ้าไม่เห็นหน้าขอบคุณ กดส่งอีกครั้งได้ ข้อความจะไม่ถูกบันทึกซ้ำ';
-    });
-    sync();
-  }
+  initWishes(D);
 
   /* countdown */
   const target=bkk(D.weddingAt);let counting=false;
@@ -354,9 +372,9 @@ function init(D,{preview=false}={}){
 
   /* gate */
   const gate=$('#gate'),stage=$('#stage');let opened=false;
-  const unlock=()=>{document.documentElement.classList.remove('lock');gate&&gate.remove();if(G)ScrollTrigger.refresh();};
+  const unlock=()=>{document.documentElement.classList.remove('lock');gate&&gate.remove();GATE='open';if(G)ScrollTrigger.refresh();if(PENDING){const p=PENDING;PENDING=null;rerender(p);}};
   const openGate=()=>{
-    if(opened)return;opened=true;clearTimeout(gateTimer);
+    if(opened)return;opened=true;GATE='opening';clearTimeout(gateTimer);
     if(!G){stage.classList.add('open');unlock();return;}
     gsap.timeline({onComplete:unlock})
       .to('.plaque',{scale:1.08,duration:.2,ease:'power1.out'})
@@ -368,8 +386,8 @@ function init(D,{preview=false}={}){
       .add(()=>{gsap.to('.curtain',{scaleX:.32,duration:2.6,ease:'power3.inOut'});
         gsap.from('.hn > *',{y:26,opacity:0,stagger:.12,duration:1.1,delay:.7,ease:'power3.out'});petals();},'-=1.1');
   };
-  if(preview){stage.classList.add('open');if(G)gsap.set('.curtain',{scaleX:.32});gate.remove();document.documentElement.classList.remove('lock');}
-  else{document.documentElement.classList.add('lock');
+  if(preview){GATE='open';stage.classList.add('open');if(G)gsap.set('.curtain',{scaleX:.32});gate.remove();document.documentElement.classList.remove('lock');}
+  else{GATE='closed';document.documentElement.classList.add('lock');
     gate.addEventListener('click',openGate);
     gate.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openGate();}});
     gateTimer=setTimeout(openGate,9000);}
@@ -432,70 +450,141 @@ function init(D,{preview=false}={}){
 }
 
 /* Re-render the card from draft data, for the owner's preview */
-function rerender(D){
+function rerender(D,{preview=true}={}){
   if(G){ScrollTrigger.getAll().forEach(t=>t.kill());gsap.globalTimeline.clear();}
   clearInterval(cdTimer);clearTimeout(gateTimer);
   $('#app').innerHTML=markup(D);
   document.documentElement.classList.remove('anim');
-  init(D,{preview:true});
-  scrollTo(0,0);
+  init(D,{preview});
+  if(preview)scrollTo(0,0);
 }
 
-init(DATA);
+/* ---------- blessings: saved to the sheet without leaving the card ---------- */
+const WISH_KEY='wish-draft';
+const newId=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36);
+function initWishes(D){
+  const wf=$('#wishForm');if(!wf)return;
+  const nm=$('#w-name'),rl=$('#w-rel'),ms=$('#w-msg'),send=$('#w-send'),err=$('#w-err'),cnt=$('#w-count');
+  let busy=false,id=newId();
+  const s=ls.get(WISH_KEY);if(s){nm.value=s.name||'';rl.value=s.rel||'';ms.value=s.msg||'';if(s.id)id=s.id;}
+  if(!API){send.disabled=true;send.querySelector('.lbl').textContent='เปิดรับคำอวยพรเร็ว ๆ นี้';}
+  const sync=()=>{cnt.textContent=ms.value.length+'/500';ls.set(WISH_KEY,{name:nm.value,rel:rl.value,msg:ms.value,id});if(nm.value.trim()&&ms.value.trim())err.textContent='';};
+  nm.addEventListener('input',sync);ms.addEventListener('input',sync);rl.addEventListener('change',sync);
+  $$('.chip').forEach(c=>c.addEventListener('click',()=>{ms.value=((ms.value.trim()?ms.value.trim()+' ':'')+c.textContent).slice(0,500);sync();}));
+  sync();
+  wf.addEventListener('submit',async e=>{
+    e.preventDefault();if(busy||!API)return;
+    const name=nm.value.trim(),msg=ms.value.trim();
+    if(!name){err.textContent='กรุณาใส่ชื่อของคุณ';nm.focus();return;}
+    if(!msg){err.textContent='กรุณาเขียนคำอวยพร';ms.focus();return;}
+    busy=true;send.disabled=true;send.classList.add('busy');err.textContent='';
+    try{
+      const res=await api({action:'wish',name,rel:rl.value,msg,id});
+      if(!res||!res.ok)throw new Error((res&&res.error)||'failed');
+      ls.del(WISH_KEY);
+      playSent(name,msg);
+    }catch(ex){
+      err.textContent='ส่งไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วกดส่งอีกครั้ง (ข้อความจะไม่ถูกบันทึกซ้ำ)';
+    }finally{busy=false;send.disabled=false;send.classList.remove('busy');}
+  });
+  $('#w-again').addEventListener('click',()=>{
+    id=newId();nm.value='';rl.value='';ms.value='';sync();
+    $('#w-sent').hidden=true;wf.hidden=false;if(window.gsap)gsap.set(wf,{clearProps:'all'});
+    wf.scrollIntoView({behavior:reduce?'auto':'smooth',block:'center'});
+    if(G)ScrollTrigger.refresh();
+  });
+}
+function playSent(name,msg){
+  const wf=$('#wishForm'),sent=$('#w-sent');
+  $('#w-paper-text').textContent=msg.length>46?msg.slice(0,46)+'…':msg;
+  $('#w-thanks').textContent='ขอบคุณคุณ'+name+' สำหรับคำอวยพรดี ๆ ถึงบ่าวสาว';
+  const show=()=>{wf.hidden=true;sent.hidden=false;sent.scrollIntoView({block:'center'});if(G)ScrollTrigger.refresh();};
+  if(!window.gsap||reduce){show();return;}
+  const hearts=$('.w-hearts');hearts.innerHTML='';
+  for(let i=0;i<14;i++){const h=document.createElement('span');h.textContent='♥';h.style.left=(10+Math.random()*80)+'%';h.style.fontSize=(12+Math.random()*16)+'px';h.style.color=['#d27f89','#b0505e','#e7b3b5','#ad91c8'][i%4];hearts.append(h);}
+  gsap.timeline()
+    .to(wf,{scale:.85,opacity:0,y:-16,duration:.4,ease:'power2.in'})
+    .add(show)
+    .set('.w-paper',{yPercent:-75}).set('.w-flap',{rotationX:180,zIndex:0}).set('.w-seal',{scale:0,opacity:0}).set('.w-done',{opacity:0,y:18})
+    .from('.w-env',{y:30,opacity:0,duration:.45,ease:'power2.out'})
+    .to('.w-paper',{yPercent:0,duration:.7,ease:'power2.inOut'},'+=.15')
+    .to('.w-flap',{rotationX:90,duration:.22,ease:'power1.in'})
+    .set('.w-flap',{zIndex:3})
+    .to('.w-flap',{rotationX:0,duration:.25,ease:'power1.out'})
+    .to('.w-seal',{scale:1,opacity:1,duration:.5,ease:'back.out(3)'},'-=.05')
+    .to('.w-env',{y:-12,duration:.5,ease:'power2.out'},'<')
+    .fromTo('.w-hearts span',{y:0,opacity:0,scale:.4},{y:()=>-(70+Math.random()*90),x:()=>(Math.random()-.5)*90,opacity:1,scale:1,duration:1.1,stagger:.05,ease:'power2.out'},'<')
+    .to('.w-hearts span',{opacity:0,duration:.5,stagger:.04},'-=.5')
+    .to('.w-done',{opacity:1,y:0,duration:.6,ease:'power3.out'},'-=1.3')
+    .to('.w-env',{y:-4,duration:1.6,ease:'sine.inOut',repeat:-1,yoyo:true});
+}
+
+/* ---------- boot ---------- */
+if(!same(DATA,BUILT))$('#app').innerHTML=markup(DATA);
+init(DATA,{preview:ADMIN});
 if(G){document.fonts&&document.fonts.ready.then(()=>ScrollTrigger.refresh());addEventListener('load',()=>ScrollTrigger.refresh());}
 
-/* =====================================================================
-   Owner tools at #admin
-   The password is the wedding date. The page source is public, so this
-   only keeps guests out of the screen; saving needs the owner's account.
-   ===================================================================== */
-const DRAFT_KEY='card-draft';
-const store={get(){try{return JSON.parse(sessionStorage.getItem(DRAFT_KEY)||'null')}catch(e){return null}},
-  set(v){try{sessionStorage.setItem(DRAFT_KEY,JSON.stringify(v))}catch(e){}},clear(){try{sessionStorage.removeItem(DRAFT_KEY)}catch(e){}}};
-const clone=o=>JSON.parse(JSON.stringify(o));
-const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
-let draft=null,authed=false,panel=null,pvBar=null;
-
-function passwordOk(pw){
-  const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(DATA.weddingAt||'');if(!m)return false;
-  const [y,mo,d]=[m[1],m[2],m[3]],be=String(+y+543),dd=String(+d),mm=String(+mo);
-  const ok=new Set([d+mo+y,d+mo+be,dd+mm+y,dd+mm+be,dd+mo+y,dd+mo+be,d+mm+y,d+mm+be,y+mo+d,be+mo+d,d+mo+y.slice(2),d+mo+be.slice(2)]);
-  return ok.has(String(pw).replace(/\D/g,''));
+/* Newest text from the sheet; re-render quietly while the doors are still closed */
+if(API&&!ADMIN){
+  apiGet({action:'card',t:Date.now()}).then(res=>{
+    if(!res||!res.ok||!res.data||same(res.data,DATA))return;
+    ls.set(CACHE_KEY,{data:res.data});DATA=res.data;
+    if(GATE==='closed')rerender(DATA,{preview:false});else if(GATE==='opening')PENDING=DATA;else rerender(DATA);
+  }).catch(()=>{});
 }
+
+/* =====================================================================
+   Owner tools at /admin. The password (the wedding date) is checked by
+   the Apps Script, which also limits wrong guesses.
+   ===================================================================== */
+if(!ADMIN)return;
+const DRAFT_KEY='card-draft',PW_KEY='card-admin-pw';
+const ss={get(k){try{return JSON.parse(sessionStorage.getItem(k)||'null')}catch(e){return null}},set(k,v){try{sessionStorage.setItem(k,JSON.stringify(v))}catch(e){}},del(k){try{sessionStorage.removeItem(k)}catch(e){}}};
+let draft=null,password=ss.get(PW_KEY),panel=null,pvBar=null;
 
 const FIELDS=[
   ['หน้าแรก',[['nameLatin1','ชื่อภาษาอังกฤษ บรรทัดที่ 1'],['nameLatin2','ชื่อภาษาอังกฤษ บรรทัดที่ 2'],['nicknames','ชื่อเล่น'],['heroDate','วันที่บนหน้าแรก'],['heroEyebrow','ข้อความเล็กด้านบน'],['monogramText','อักษรย่อบนตราประทับซองจดหมาย'],['title','ชื่อการ์ด (แสดงบนแท็บเบราว์เซอร์)']]],
-  ['วันและเวลา',[['weddingAt','วันเวลาเริ่มงาน','datetime-local','ใช้ทั้งนับถอยหลัง ปฏิทิน และเป็นรหัสผ่านหน้านี้ ถ้าเปลี่ยนวัน รหัสผ่านจะเปลี่ยนตาม'],['calendarEnd','เวลาจบงาน (สำหรับปฏิทิน)','datetime-local'],['countdownNote','ข้อความใต้นับถอยหลัง'],['dateThai','วันที่แบบเต็ม (ภาษาไทย)']]],
+  ['วันและเวลา',[['weddingAt','วันเวลาเริ่มงาน','datetime-local','ใช้ทั้งนับถอยหลัง ปฏิทิน และเป็นรหัสผ่านหน้านี้ ถ้าเปลี่ยนวัน รหัสผ่านจะเปลี่ยนตามวันใหม่'],['calendarEnd','เวลาจบงาน (สำหรับปฏิทิน)','datetime-local'],['countdownNote','ข้อความใต้นับถอยหลัง'],['dateThai','วันที่แบบเต็ม (ภาษาไทย)']]],
   ['ยินดีต้อนรับ',[['welcomeScript','ข้อความตัวเขียน (ภาษาอังกฤษ)'],['welcomeTitle','หัวข้อ'],['welcomeText','ข้อความ','textarea']]],
   ['ครอบครัวและบ่าวสาว',[['brideParents','บิดา–มารดาฝ่ายเจ้าสาว','textarea'],['groomParents','บิดา–มารดาฝ่ายเจ้าบ่าว','textarea'],['inviteText','ข้อความเรียนเชิญ','textarea'],['brideName','ชื่อ-นามสกุลเจ้าสาว'],['brideNick','ชื่อเล่นเจ้าสาว'],['groomName','ชื่อ-นามสกุลเจ้าบ่าว'],['groomNick','ชื่อเล่นเจ้าบ่าว']]],
   ['สถานที่',[['venueTitle','หัวข้อ'],['venueDate','วันที่'],['venueTime','เวลา'],['address','ที่อยู่','textarea'],['mapsUrl','ลิงก์ Google Maps','url','QR code บนการ์ดจะสร้างใหม่จากลิงก์นี้'],['calendarTitle','ชื่อกิจกรรมเมื่อแขกบันทึกลงปฏิทิน']]],
   ['TIMELINE'],
   ['Dress code',[['dressTitle','หัวข้อ'],['dressText','คำอธิบาย','textarea']]],
   ['COLORS'],
-  ['คำอวยพร',[['wishUrl','ลิงก์ Web app ของ Apps Script','url','ลิงก์ที่ได้ตอน Deploy มีรูปแบบ https://script.google.com/macros/s/…/exec ว่างไว้ = ปิดรับคำอวยพร'],['wishesText','ข้อความ','textarea'],['wishPhrases','ข้อความสำเร็จรูปให้แขกแตะเลือก','lines','บรรทัดละ 1 ข้อความ'],['letterTo','ข้อความบนจดหมาย (บรรทัดแรก)'],['letterText','ข้อความบนจดหมาย (บรรทัดที่สอง)']]],
+  ['คำอวยพร',[['wishesText','ข้อความ','textarea'],['wishPhrases','ข้อความสำเร็จรูปให้แขกแตะเลือก','lines','บรรทัดละ 1 ข้อความ'],['letterTo','ข้อความบนจดหมาย (บรรทัดแรก)'],['letterText','ข้อความบนจดหมาย (บรรทัดที่สอง)']]],
   ['ท้ายการ์ด',[['sorry','ข้อความขออภัย'],['closing','คำลงท้าย']]]
 ];
 
 function el(tag,attrs={},kids=[]){const e=document.createElement(tag);for(const k in attrs){if(k==='text')e.textContent=attrs[k];else if(k.startsWith('on'))e.addEventListener(k.slice(2),attrs[k]);else e.setAttribute(k,attrs[k]);}
-  (Array.isArray(kids)?kids:[kids]).forEach(c=>c&&e.append(c));return e;}
+  (Array.isArray(kids)?kids:[kids]).forEach(c=>c!=null&&c!==false&&e.append(c));return e;}
 
 function openPanel(){
   if(!panel){panel=el('div',{class:'adm',id:'admin',role:'dialog','aria-label':'แก้ไขการ์ด'});document.body.append(panel);}
   panel.hidden=false;document.documentElement.classList.add('lock');
-  authed?renderEditor():renderLogin();
+  password?renderEditor():renderLogin();
 }
-function closePanel(){if(panel)panel.hidden=true;if(!$('#gate'))document.documentElement.classList.remove('lock');}
+const toCard=()=>{location.href=BASE;};
 
-function renderLogin(){
+function renderLogin(message){
   panel.innerHTML='';
   const inp=el('input',{id:'adm-pw',type:'password',inputmode:'numeric',autocomplete:'off',placeholder:'วว ดด ปปปป','aria-label':'รหัสผ่าน'});
-  const err=el('div',{class:'err',role:'alert'});
-  const form=el('form',{onsubmit:e=>{e.preventDefault();if(passwordOk(inp.value)){authed=true;renderEditor();}else{err.textContent='รหัสผ่านไม่ถูกต้อง พิมพ์วันแต่งงาน เช่น 09012027';inp.select();}}},[
-    ASSETS.monogram?el('img',{src:ASSETS.monogram,alt:''}):null,
+  const err=el('div',{class:'err',role:'alert',text:message||(API?'':'ยังไม่ได้ใส่ลิงก์ Apps Script ในไฟล์ config.js')});
+  const btn=el('button',{class:'abtn pri',type:'submit',text:'เข้าสู่หน้าแก้ไข'});
+  const form=el('form',{onsubmit:async e=>{
+    e.preventDefault();if(!API||!inp.value.trim())return;
+    btn.disabled=true;err.textContent='กำลังตรวจสอบ…';
+    try{
+      const res=await api({action:'login',password:inp.value});
+      if(res&&res.ok){password=inp.value;ss.set(PW_KEY,password);if(res.data&&!same(res.data,DATA)){DATA=res.data;ls.set(CACHE_KEY,{data:DATA});rerender(DATA);}renderEditor();}
+      else{err.textContent=res&&res.error==='locked'?'ใส่รหัสผิดหลายครั้ง ระบบพักไว้ 10 นาที แล้วลองใหม่':'รหัสผ่านไม่ถูกต้อง พิมพ์วันแต่งงาน เช่น 09012027';inp.select();}
+    }catch(ex){err.textContent='เชื่อมต่อไม่ได้ ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่';}
+    btn.disabled=false;
+  }},[
+    el('img',{src:ASSETS.monogram,alt:''}),
     el('h1',{text:'แก้ไขการ์ดแต่งงาน'}),
     el('p',{text:'สำหรับเจ้าของการ์ด ใส่รหัสผ่านเป็นวันแต่งงาน (วันเดือนปี)'}),
-    inp,el('button',{class:'abtn pri',type:'submit',text:'เข้าสู่หน้าแก้ไข'}),err,
-    el('button',{class:'mini',type:'button',text:'กลับไปที่การ์ด',onclick:()=>{history.replaceState(null,'',location.pathname+location.search);closePanel();}})
+    inp,btn,err,
+    el('button',{class:'mini',type:'button',text:'ไปที่การ์ด',onclick:toCard})
   ]);
   panel.append(el('div',{class:'login'},form));
   setTimeout(()=>inp.focus(),50);
@@ -505,27 +594,28 @@ function field(key,label,type,hint){
   const id='f-'+key,list=type==='lines',v=draft[key]==null?'':list?(draft[key]||[]).join('\n'):draft[key];
   const input=type==='textarea'||list?el('textarea',{id,rows:list?'4':'3'}):el('input',{id,type:type||'text'});
   input.value=v;
-  input.addEventListener('input',()=>{draft[key]=list?input.value.split('\n').map(s=>s.trim()).filter(Boolean):input.value;store.set(draft);});
+  input.addEventListener('input',()=>{draft[key]=list?input.value.split('\n').map(s=>s.trim()).filter(Boolean):input.value;ss.set(DRAFT_KEY,draft);});
   return el('div',{},[el('label',{for:id,text:label}),input,hint?el('div',{class:'hint',text:hint}):null]);
 }
 function timelineBox(){
   const box=el('fieldset',{},[el('legend',{text:'กำหนดการ'})]);
   const list=el('div');box.append(list);
+  const save=()=>ss.set(DRAFT_KEY,draft);
   const draw=()=>{list.innerHTML='';
     draft.timeline.forEach((t,i)=>{
       const sel=el('select',{id:'tl-icon-'+i,'aria-label':'ไอคอน'});Object.entries(ICONS).forEach(([k,v])=>{const o=el('option',{value:k,text:v});if(t.icon===k)o.selected=true;sel.append(o);});
-      sel.addEventListener('change',()=>{t.icon=sel.value;store.set(draft);});
-      const time=el('input',{id:'tl-time-'+i,type:'text'});time.value=t.time;time.addEventListener('input',()=>{t.time=time.value;store.set(draft);});
-      const text=el('textarea',{id:'tl-text-'+i,rows:'2'});text.value=t.text;text.addEventListener('input',()=>{t.text=text.value;store.set(draft);});
+      sel.addEventListener('change',()=>{t.icon=sel.value;save();});
+      const time=el('input',{id:'tl-time-'+i,type:'text'});time.value=t.time;time.addEventListener('input',()=>{t.time=time.value;save();});
+      const text=el('textarea',{id:'tl-text-'+i,rows:'2'});text.value=t.text;text.addEventListener('input',()=>{t.text=text.value;save();});
       list.append(el('div',{class:'tlrow'},[
         el('div',{class:'two'},[el('div',{},[el('label',{for:'tl-time-'+i,text:'เวลา'}),time]),el('div',{},[el('label',{for:'tl-icon-'+i,text:'ไอคอน'}),sel])]),
         el('label',{for:'tl-text-'+i,text:'รายละเอียด'}),text,
         el('div',{},[
-          i>0?el('button',{class:'mini',type:'button',text:'↑ เลื่อนขึ้น',onclick:()=>{[draft.timeline[i-1],draft.timeline[i]]=[draft.timeline[i],draft.timeline[i-1]];store.set(draft);draw();}}):null,' ',
-          el('button',{class:'mini del',type:'button',text:'ลบช่วงนี้',onclick:()=>{draft.timeline.splice(i,1);store.set(draft);draw();}})])
+          i>0?el('button',{class:'mini',type:'button',text:'↑ เลื่อนขึ้น',onclick:()=>{[draft.timeline[i-1],draft.timeline[i]]=[draft.timeline[i],draft.timeline[i-1]];save();draw();}}):null,' ',
+          el('button',{class:'mini del',type:'button',text:'ลบช่วงนี้',onclick:()=>{draft.timeline.splice(i,1);save();draw();}})])
       ]));
     });
-    list.append(el('button',{class:'mini',type:'button',text:'+ เพิ่มช่วงเวลา',onclick:()=>{draft.timeline.push({icon:'none',time:'',text:''});store.set(draft);draw();}}));
+    list.append(el('button',{class:'mini',type:'button',text:'+ เพิ่มช่วงเวลา',onclick:()=>{draft.timeline.push({icon:'none',time:'',text:''});save();draw();}}));
   };draw();return box;
 }
 function colorsBox(){
@@ -533,26 +623,23 @@ function colorsBox(){
   const wrap=el('div',{class:'colors'});box.append(wrap,el('div',{class:'hint',text:'แตะวงกลมเพื่อเลือกสี ใส่ได้สูงสุด 9 สี'}));
   const draw=()=>{wrap.innerHTML='';
     draft.colors.forEach((c,i)=>{const inp=el('input',{type:'color',id:'col-'+i,'aria-label':'สีที่ '+(i+1)});inp.value=c;
-      inp.addEventListener('input',()=>{draft.colors[i]=inp.value;store.set(draft);});
-      wrap.append(el('div',{class:'c'},[inp,el('button',{type:'button',text:'ลบ',onclick:()=>{draft.colors.splice(i,1);store.set(draft);draw();}})]));});
-    if(draft.colors.length<9)wrap.append(el('button',{class:'mini',type:'button',text:'+ เพิ่มสี',onclick:()=>{draft.colors.push('#e8d5f0');store.set(draft);draw();}}));
+      inp.addEventListener('input',()=>{draft.colors[i]=inp.value;ss.set(DRAFT_KEY,draft);});
+      wrap.append(el('div',{class:'c'},[inp,el('button',{type:'button',text:'ลบ',onclick:()=>{draft.colors.splice(i,1);ss.set(DRAFT_KEY,draft);draw();}})]));});
+    if(draft.colors.length<9)wrap.append(el('button',{class:'mini',type:'button',text:'+ เพิ่มสี',onclick:()=>{draft.colors.push('#e8d5f0');ss.set(DRAFT_KEY,draft);draw();}}));
   };draw();return box;
 }
-
 function validate(D){
   if(!bkk(D.weddingAt))return 'กรุณาใส่วันเวลาเริ่มงานให้ครบ';
   if(D.mapsUrl&&!safeUrl(D.mapsUrl))return 'ลิงก์ Google Maps ต้องขึ้นต้นด้วย https://';
-  if(D.wishUrl&&!scriptUrl(D.wishUrl))return 'ลิงก์ Apps Script ต้องเป็นลิงก์ Web app แบบ https://script.google.com/macros/s/…/exec';
   return '';
 }
-
 function renderEditor(msg,isErr){
-  if(!draft){const saved=store.get();draft=saved&&!same(saved,DATA)?saved:clone(DATA);}
+  if(!draft){const saved=ss.get(DRAFT_KEY);draft=saved&&!same(saved,DATA)?saved:clone(DATA);}
   const restored=!same(draft,DATA);
   panel.innerHTML='';
   const inner=el('div',{class:'adm-in'});
-  inner.append(el('div',{class:'adm-head'},[ASSETS.monogram?el('img',{src:ASSETS.monogram,alt:''}):null,el('div',{},[el('h1',{text:'แก้ไขการ์ดแต่งงาน'})])]));
-  inner.append(el('p',{class:'sub',text:'แก้ข้อความแล้วกด "ดูตัวอย่าง" เพื่อดูบนการ์ด เมื่อพอใจกด "บันทึก" ทุกคนที่เปิดลิงก์จะเห็นเวอร์ชันใหม่ บันทึกได้เฉพาะบัญชีเจ้าของการ์ดใน claude.ai'}));
+  inner.append(el('div',{class:'adm-head'},[el('img',{src:ASSETS.monogram,alt:''}),el('h1',{text:'แก้ไขการ์ดแต่งงาน'})]));
+  inner.append(el('p',{class:'sub',text:'แก้ข้อความแล้วกด "ดูตัวอย่าง" เพื่อดูบนการ์ด เมื่อพอใจกด "บันทึก" แขกที่เปิดการ์ดหลังจากนี้จะเห็นข้อมูลใหม่'}));
   const status=el('div',{class:'status'+(isErr?' err':''),role:'status',id:'adm-status'});
   if(msg)status.textContent=msg;else if(restored)status.textContent='มีการแก้ไขที่ยังไม่ได้บันทึก';else status.hidden=true;
   inner.append(status);
@@ -561,16 +648,17 @@ function renderEditor(msg,isErr){
     if(title==='COLORS')return inner.append(colorsBox());
     inner.append(el('fieldset',{},[el('legend',{text:title}),...list.map(([k,l,t,h])=>field(k,l,t,h))]));
   });
-  inner.append(el('button',{class:'mini del',type:'button',text:'ยกเลิกการแก้ไขทั้งหมด',onclick:()=>{draft=clone(DATA);store.clear();renderEditor('ย้อนกลับเป็นข้อมูลที่บันทึกล่าสุดแล้ว');}}));
+  inner.append(el('div',{},[
+    el('button',{class:'mini del',type:'button',text:'ยกเลิกการแก้ไขทั้งหมด',onclick:()=>{draft=clone(DATA);ss.del(DRAFT_KEY);rerender(DATA);renderEditor('ย้อนกลับเป็นข้อมูลที่บันทึกล่าสุดแล้ว');}}),' ',
+    el('button',{class:'mini',type:'button',text:'ออกจากระบบ',onclick:()=>{password=null;ss.del(PW_KEY);renderLogin();}})]));
   panel.append(inner);
   panel.append(el('div',{class:'adm-bar'},[
     el('button',{class:'abtn',type:'button',text:'ดูตัวอย่าง',onclick:preview}),
     el('button',{class:'abtn pri',type:'button',id:'adm-save',text:'บันทึก',onclick:save}),
-    el('button',{class:'abtn',type:'button',text:'ปิด',onclick:()=>{history.replaceState(null,'',location.pathname+location.search);closePanel();}})
+    el('button',{class:'abtn',type:'button',text:'ไปที่การ์ด',onclick:toCard})
   ]));
 }
 function setStatus(t,isErr){const s=$('#adm-status');if(!s)return;s.hidden=false;s.className='status'+(isErr?' err':'');s.textContent=t;s.scrollIntoView({block:'nearest'});}
-
 function preview(){
   const err=validate(draft);if(err)return setStatus(err,true);
   panel.hidden=true;document.documentElement.classList.remove('lock');
@@ -580,31 +668,23 @@ function preview(){
     el('button',{class:'abtn pri',type:'button',text:'บันทึก',onclick:()=>{pvBar.hidden=true;openPanel();save();}})]);document.body.append(pvBar);}
   pvBar.hidden=false;
 }
-
 async function save(){
   const err=validate(draft);if(err)return setStatus(err,true);
   if(same(draft,DATA))return setStatus('ยังไม่มีอะไรเปลี่ยน');
   const btn=$('#adm-save');btn&&(btn.disabled=true);
   setStatus('กำลังบันทึก…');
-  store.set(draft);
-  let art=null;try{art=window.claude&&window.claude.use?await window.claude.use('artifact'):null;}catch(e){art=null;}
-  if(!art){btn&&(btn.disabled=false);return setStatus('บันทึกไม่ได้ในหน้านี้ เปิดการ์ดผ่าน claude.ai ด้วยบัญชีเจ้าของการ์ด แล้วลองอีกครั้ง',true);}
   try{
-    await art.publish(shell(draft,parts()));
-    setStatus('บันทึกแล้ว กำลังโหลดการ์ดเวอร์ชันใหม่…');
-  }catch(e){
-    btn&&(btn.disabled=false);
-    const c=e&&e.code;
-    if(c==='conflict')setStatus('มีการบันทึกจากที่อื่นก่อนหน้า การ์ดกำลังโหลดเวอร์ชันล่าสุด การแก้ไขของคุณยังเก็บไว้ เปิดหน้านี้อีกครั้งแล้วกดบันทึก',true);
-    else if(c==='not_writer'||c==='not_granted'||c==='consent_required'||c==='capability_disabled'||c==='not_declared')setStatus('บัญชีนี้ไม่มีสิทธิ์แก้ไขการ์ด ต้องเปิดด้วยบัญชีเจ้าของการ์ด',true);
-    else if(c==='rate_limited')setStatus('บันทึกถี่เกินไป รอสักครู่แล้วลองใหม่',true);
-    else if(c==='too_large')setStatus('ข้อมูลมีขนาดใหญ่เกินไป',true);
-    else setStatus('บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง',true);
-  }
+    const res=await api({action:'save',password,data:draft});
+    if(res&&res.ok){
+      const dateChanged=draft.weddingAt!==DATA.weddingAt;
+      DATA=clone(draft);ls.set(CACHE_KEY,{data:DATA});ss.del(DRAFT_KEY);rerender(DATA);
+      if(dateChanged){password=null;ss.del(PW_KEY);renderLogin('บันทึกแล้ว วันแต่งงานเปลี่ยน รหัสผ่านใหม่คือวันใหม่ เข้าสู่ระบบอีกครั้ง');return;}
+      setStatus('บันทึกแล้ว แขกที่เปิดการ์ดหลังจากนี้จะเห็นข้อมูลใหม่');
+    }else if(res&&(res.error==='password'||res.error==='locked')){
+      password=null;ss.del(PW_KEY);renderLogin(res.error==='locked'?'ใส่รหัสผิดหลายครั้ง ระบบพักไว้ 10 นาที':'รหัสผ่านไม่ถูกต้อง เข้าสู่ระบบอีกครั้ง (การแก้ไขยังเก็บไว้)');return;
+    }else setStatus('บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง',true);
+  }catch(ex){setStatus('เชื่อมต่อไม่ได้ ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่ การแก้ไขยังเก็บไว้',true);}
+  btn&&(btn.disabled=false);
 }
-
-/* A draft that matches what is now published was saved: drop it */
-{const d=store.get();if(d&&same(d,DATA))store.clear();}
-const route=()=>{if(location.hash==='#admin')openPanel();};
-addEventListener('hashchange',route);route();
+openPanel();
 })();

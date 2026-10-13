@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>แก้ไขการ์ด · Kanjanaporn &amp; Nattapong</title>
+<meta name="description" content="วันเสาร์ที่ 9 มกราคม พ.ศ. 2570 · บ้านเลขที่ 27 หมู่ 6 บ้านสระยายชี ตำบลเนินปอ อำเภอสามง่าม จังหวัดพิจิตร">
+<meta property="og:title" content="Kanjanaporn &amp; Nattapong">
+<meta property="og:description" content="วันเสาร์ที่ 9 มกราคม พ.ศ. 2570">
+<meta name="theme-color" content="#7f8f72">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../assets/monogram.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;0,500;1,400&family=Pinyon+Script&family=Trirong:wght@300;400;500&family=Taviraj:wght@300;400&display=swap">
+<link rel="stylesheet" href="../app.css">
+</head>
+<body>
+<div id="app">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><radialGradient id="pearl" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#f3ede5"/><stop offset="1" stop-color="#cfc2b3"/></radialGradient></defs></svg>
+<div id="gate" role="button" tabindex="0" aria-label="แตะเพื่อเปิดการ์ด">
+  <div class="inner">
+    <div class="door l"><i></i><i></i><span class="knob"></span></div>
+    <div class="door r"><i></i><i></i><span class="knob"></span></div>
+    <div class="plaque">
+      <svg viewBox="0 0 150 180" aria-hidden="true"><path d="M75 4c16 0 20 10 34 12s26 10 26 26c0 12 11 18 11 48s-11 36-11 48c0 16-12 24-26 26s-18 12-34 12-20-10-34-12-26-10-26-26c0-12-11-18-11-48s11-36 11-48c0-16 12-24 26-26S59 4 75 4z" fill="#f8f1e7" stroke="#b6976a" stroke-width="2"/><path d="M75 14c13 0 17 8 29 10s21 8 21 21c0 10 9 15 9 45s-9 35-9 45c0 13-9 19-21 21s-16 10-29 10-17-8-29-10-21-8-21-21c0-10-9-15-9-45s9-35 9-45c0-13 9-19 21-21s16-10 29-10z" fill="none" stroke="#b6976a" stroke-width=".8"/></svg>
+      <img data-asset="monogram" alt="KN">
+    </div>
+    <div class="tap">แตะเพื่อเปิดการ์ด<small>You are invited</small></div>
+  </div>
+</div>
+<canvas id="petals" aria-hidden="true"></canvas>
+<main class="page">
+  <section class="hero" id="hero">
+    <div class="stage" id="stage">
+      <div class="stage-inner">
+        <div class="hn">
+          <div class="eyebrow">The wedding of</div>
+          <div class="hn-name">Kanjanaporn</div>
+          <div class="hn-amp">&amp;</div>
+          <div class="hn-name">Nattapong</div>
+          <div class="hn-th">มด &amp; เต้</div>
+          <div class="hn-date">09 · 01 · 2027</div>
+        </div>
+        <div class="villa-wrap"><svg viewBox="0 0 440 330" id="villa" aria-hidden="true"></svg></div>
+        <div class="cw l"><div class="curtain"></div></div>
+        <div class="cw r"><div class="curtain"></div></div>
+        <div class="valance"><svg viewBox="0 0 440 96" id="valance" aria-hidden="true"></svg></div>
+        <div class="scroll-cue">เลื่อนลง<i>↓</i></div>
+      </div>
+      <div class="hero-fade"></div>
+    </div>
+  </section>
+
+  <section class="sec welcome">
+    <svg class="garland" id="gWelcome" viewBox="0 0 440 170" aria-hidden="true"></svg>
+    <div class="fw">
+      <span class="fl t"></span><span class="fl r"></span><span class="fl b"></span><span class="fl l"></span>
+      <div class="script rv">Welcome to our wedding</div>
+      <h2 class="rv">ยินดีต้อนรับ</h2>
+      <hr class="rule">
+      <p class="rv">ขอบคุณที่เปิดการ์ดใบนี้<br>เลื่อนลงเพื่อดูรายละเอียดวันสำคัญ<br>ของมดและเต้</p>
+      <svg class="swans" viewBox="0 0 200 100" id="swans" aria-hidden="true"></svg>
+    </div>
+    <svg class="roses" id="gRoses" viewBox="0 0 440 60" aria-hidden="true"></svg>
+  </section>
+
+  <section class="sec countdown">
+    <div class="ttl rv">Countdown</div>
+    <div class="ttl-th rv">นับถอยหลังสู่วันแต่งงาน</div>
+    <div class="rings">
+      <div class="ring"><svg viewBox="0 0 100 100" class="pr"></svg><div class="num"><b id="cd-d">0</b><small>วัน</small></div></div>
+      <div class="ring"><svg viewBox="0 0 100 100" class="pr"></svg><div class="num"><b id="cd-h">0</b><small>ชั่วโมง</small></div></div>
+      <div class="ring"><svg viewBox="0 0 100 100" class="pr"></svg><div class="num"><b id="cd-m">0</b><small>นาที</small></div></div>
+    </div>
+    <p class="cd-note rv">ถึงเวลาเริ่มพิธีสงฆ์ 07.09 น.</p>
+  </section>
+
+  <svg class="swag" id="swag" viewBox="0 0 440 130" aria-hidden="true"></svg>
+
+  <section class="sec names">
+    <div class="eyebrow rv">Together with their families</div>
+    <div class="parents rv">
+      <div><small>ฝ่ายเจ้าสาว</small>นาวาตรีสมชาย ก้านแก้ว<br>นางเนตรนภา ก้านแก้ว</div>
+      <div><small>ฝ่ายเจ้าบ่าว</small>นายเชิญ กุลคง<br>นางดาวรุ่ง กุลคง</div>
+    </div>
+    <p class="lead rv">มีความยินดีเรียนเชิญท่านเพื่อเป็นเกียรติ<br>เนื่องในพิธีมงคลสมรส ระหว่าง</p>
+    <div class="nm bride">นางสาวกาญจนาพร ก้านแก้ว<span>(มด)</span></div>
+    <div class="amp">&amp;</div>
+    <div class="nm groom">นายนัฐพงศ์ กุลคง<span>(เต้)</span></div>
+    <div class="wdate rv">วันเสาร์ที่ 9 มกราคม พ.ศ. 2570</div>
+  </section>
+
+  <section class="sec venue">
+    <div class="vcard">
+      <svg class="garland" id="gCard" viewBox="0 0 440 130" aria-hidden="true"></svg>
+      <div class="vbody">
+        <div class="eyebrow">Ceremony &amp; Reception</div>
+        <h3>พิธีมงคลสมรส</h3>
+        <div class="vdate">วันเสาร์ที่ 9 มกราคม 2570</div>
+        <div class="vtime">เริ่มพิธีสงฆ์ เวลา 07.09 น.</div>
+        <hr class="rule">
+        <div class="vaddr">บ้านเลขที่ 27 หมู่ 6 บ้านสระยายชี<br>ตำบลเนินปอ อำเภอสามง่าม<br>จังหวัดพิจิตร</div>
+        <div class="btns">
+          <a class="btn solid" href="https://maps.app.goo.gl/sEE5bxn7qwUFKzGLA" target="_blank" rel="noopener">เปิดแผนที่ Google Maps</a>
+          <a class="btn" href="https://calendar.google.com/calendar/render?action=TEMPLATE&amp;text=%E0%B8%87%E0%B8%B2%E0%B8%99%E0%B9%81%E0%B8%95%E0%B9%88%E0%B8%87%E0%B8%87%E0%B8%B2%E0%B8%99%20%E0%B8%A1%E0%B8%94%20%26%20%E0%B9%80%E0%B8%95%E0%B9%89&amp;dates=20270109T000900Z/20270109T070000Z&amp;location=%E0%B8%9A%E0%B9%89%E0%B8%B2%E0%B8%99%E0%B9%80%E0%B8%A5%E0%B8%82%E0%B8%97%E0%B8%B5%E0%B9%88%2027%20%E0%B8%AB%E0%B8%A1%E0%B8%B9%E0%B9%88%206%20%E0%B8%9A%E0%B9%89%E0%B8%B2%E0%B8%99%E0%B8%AA%E0%B8%A3%E0%B8%B0%E0%B8%A2%E0%B8%B2%E0%B8%A2%E0%B8%8A%E0%B8%B5%20%E0%B8%95%E0%B8%B3%E0%B8%9A%E0%B8%A5%E0%B9%80%E0%B8%99%E0%B8%B4%E0%B8%99%E0%B8%9B%E0%B8%AD%20%E0%B8%AD%E0%B8%B3%E0%B9%80%E0%B8%A0%E0%B8%AD%E0%B8%AA%E0%B8%B2%E0%B8%A1%E0%B8%87%E0%B9%88%E0%B8%B2%E0%B8%A1%20%E0%B8%88%E0%B8%B1%E0%B8%87%E0%B8%AB%E0%B8%A7%E0%B8%B1%E0%B8%94%E0%B8%9E%E0%B8%B4%E0%B8%88%E0%B8%B4%E0%B8%95%E0%B8%A3" target="_blank" rel="noopener">บันทึกลงปฏิทิน</a>
+        </div>
+        <img class="qr" id="qr" alt="QR code แผนที่ไปงาน"><div class="qr-cap">สแกนเพื่อนำทาง</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec timeline">
+    <div class="ttl rv">Timeline</div>
+    <div class="ttl-th rv">กำหนดการ</div>
+    <div class="tl" id="tl"><span class="tl-line"></span><div class="ti"><img data-asset="monk" alt=""><span class="dot"></span><div class="tx"><b>07.09 น.</b><span>พิธีสงฆ์</span></div></div><div class="ti"><img data-asset="khanmak" alt=""><span class="dot"></span><div class="tx"><b>08.09 น.</b><span>พิธีแห่ขันหมาก<br>พิธีบายศรีสู่ขวัญ</span></div></div><div class="ti"><img data-asset="couple" alt=""><span class="dot"></span><div class="tx"><b>09.09 น.</b><span>พิธีรับไหว้<br>พิธีผูกแขน</span></div></div><div class="ti"><img data-asset="food" alt=""><span class="dot"></span><div class="tx"><b>11.00 น.</b><span>ร่วมรับประทานอาหาร</span></div></div></div>
+  </section>
+
+  <section class="sec dress">
+    <div class="ttl rv">Dress Code</div>
+    <div class="ttl-th rv">สีพาสเทล</div>
+    <p class="rv">แต่งกายโทนสีพาสเทล ตามเฉดสีด้านล่าง</p>
+    <div class="rail-wrap"><span class="rail"></span><div class="hangers" id="hangers"></div></div>
+  </section>
+
+  <section class="sec wishes">
+    <div class="ttl rv">Wishes</div>
+    <div class="ttl-th rv">ฝากคำอวยพร</div>
+    <p class="intro rv">สำหรับท่านที่ไม่สะดวกมาร่วมงาน<br>ฝากคำอวยพรถึงมดและเต้ได้ที่นี่<br>ทุกข้อความจะเก็บไว้เป็นที่ระลึก</p>
+    <div class="env" id="env">
+      <div class="back"></div>
+      <div class="letter"><em>Dear Mod &amp; Tae</em>ขอให้รักกันตลอดไป…</div>
+      <div class="front"></div><div class="flap"></div>
+      <div class="seal">KN</div>
+    </div>
+    <form class="wish-form" id="wishForm" novalidate>
+      <label for="w-name">ชื่อของคุณ</label>
+      <input id="w-name" name="name" maxlength="80" autocomplete="name" placeholder="เช่น ป้าแดง">
+      <label for="w-rel">เกี่ยวข้องกับบ่าวสาวเป็น <small>(ไม่บังคับ)</small></label>
+      <select id="w-rel" name="rel"><option value="">เลือก</option><option>ญาติฝ่ายเจ้าสาว</option><option>ญาติฝ่ายเจ้าบ่าว</option><option>เพื่อนเจ้าสาว</option><option>เพื่อนเจ้าบ่าว</option><option>เพื่อนร่วมงาน</option><option>อื่น ๆ</option></select>
+      <label for="w-msg">คำอวยพร</label>
+      <textarea id="w-msg" name="msg" maxlength="500" rows="5" placeholder="เขียนคำอวยพรถึงบ่าวสาว"></textarea>
+      <div class="w-count" id="w-count">0/500</div>
+      <div class="chips" aria-label="ข้อความสำเร็จรูป"><button type="button" class="chip">ขอให้รักกันตลอดไป</button><button type="button" class="chip">ขอให้มีความสุขมาก ๆ</button><button type="button" class="chip">ยินดีด้วยนะ เสียดายที่ไปร่วมงานไม่ได้</button><button type="button" class="chip">ขอให้ครอบครัวอบอุ่นและมั่นคง</button></div>
+      <div class="w-err" id="w-err" role="alert"></div>
+      <button type="submit" class="btn solid w-send" id="w-send"><span class="lbl">ส่งคำอวยพร</span><span class="spin" aria-hidden="true"></span></button>
+    </form>
+    <div class="w-sent" id="w-sent" hidden>
+      <div class="w-stage" aria-hidden="true">
+        <div class="w-env"><div class="w-back"></div><div class="w-paper"><em>Dear Mod &amp; Tae</em><span id="w-paper-text"></span></div><div class="w-front"></div><div class="w-flap"></div><div class="w-seal">KN</div></div>
+        <div class="w-hearts"></div>
+      </div>
+      <div class="w-done" role="status">
+        <div class="script">Thank you</div>
+        <h3>ได้รับคำอวยพรแล้ว</h3>
+        <p id="w-thanks"></p>
+        <button type="button" class="mini" id="w-again">เขียนอีกฉบับ</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec foot">
+    <svg class="swag" id="swag2" viewBox="0 0 440 130" aria-hidden="true"></svg>
+    <p class="sorry rv">( ขออภัยหากมิได้มาเรียนเชิญด้วยตัวเอง )</p>
+    <img class="rv" data-asset="monogram" alt="KN">
+    <div class="script rv">See you there</div>
+  </section>
+</main></div>
+<script type="application/json" id="card-data">{"title":"Kanjanaporn & Nattapong","monogramText":"KN","heroEyebrow":"The wedding of","nameLatin1":"Kanjanaporn","nameLatin2":"Nattapong","nicknames":"มด & เต้","heroDate":"09 · 01 · 2027","weddingAt":"2027-01-09T07:09","calendarEnd":"2027-01-09T14:00","countdownNote":"ถึงเวลาเริ่มพิธีสงฆ์ 07.09 น.","welcomeScript":"Welcome to our wedding","welcomeTitle":"ยินดีต้อนรับ","welcomeText":"ขอบคุณที่เปิดการ์ดใบนี้\nเลื่อนลงเพื่อดูรายละเอียดวันสำคัญ\nของมดและเต้","brideParents":"นาวาตรีสมชาย ก้านแก้ว\nนางเนตรนภา ก้านแก้ว","groomParents":"นายเชิญ กุลคง\nนางดาวรุ่ง กุลคง","inviteText":"มีความยินดีเรียนเชิญท่านเพื่อเป็นเกียรติ\nเนื่องในพิธีมงคลสมรส ระหว่าง","brideName":"นางสาวกาญจนาพร ก้านแก้ว","brideNick":"(มด)","groomName":"นายนัฐพงศ์ กุลคง","groomNick":"(เต้)","dateThai":"วันเสาร์ที่ 9 มกราคม พ.ศ. 2570","venueTitle":"พิธีมงคลสมรส","venueDate":"วันเสาร์ที่ 9 มกราคม 2570","venueTime":"เริ่มพิธีสงฆ์ เวลา 07.09 น.","address":"บ้านเลขที่ 27 หมู่ 6 บ้านสระยายชี\nตำบลเนินปอ อำเภอสามง่าม\nจังหวัดพิจิตร","mapsUrl":"https://maps.app.goo.gl/sEE5bxn7qwUFKzGLA","calendarTitle":"งานแต่งงาน มด & เต้","timeline":[{"icon":"monk","time":"07.09 น.","text":"พิธีสงฆ์"},{"icon":"khanmak","time":"08.09 น.","text":"พิธีแห่ขันหมาก\nพิธีบายศรีสู่ขวัญ"},{"icon":"couple","time":"09.09 น.","text":"พิธีรับไหว้\nพิธีผูกแขน"},{"icon":"food","time":"11.00 น.","text":"ร่วมรับประทานอาหาร"}],"dressTitle":"สีพาสเทล","dressText":"แต่งกายโทนสีพาสเทล ตามเฉดสีด้านล่าง","colors":["#9eeed8","#a6e3a3","#f4b8b2","#f77d7d","#d9a6a3","#fca476","#fbf07c"],"wishesText":"สำหรับท่านที่ไม่สะดวกมาร่วมงาน\nฝากคำอวยพรถึงมดและเต้ได้ที่นี่\nทุกข้อความจะเก็บไว้เป็นที่ระลึก","letterTo":"Dear Mod & Tae","letterText":"ขอให้รักกันตลอดไป…","sorry":"( ขออภัยหากมิได้มาเรียนเชิญด้วยตัวเอง )","closing":"See you there","wishUrl":"","wishPhrases":["ขอให้รักกันตลอดไป","ขอให้มีความสุขมาก ๆ","ยินดีด้วยนะ เสียดายที่ไปร่วมงานไม่ได้","ขอให้ครอบครัวอบอุ่นและมั่นคง"]}</script>
+<script>window.CARD_BASE="../";window.CARD_ADMIN=true;</script>
+<script src="../config.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="../app.js"></script>
+</body>
+</html>
