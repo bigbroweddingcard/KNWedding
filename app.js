@@ -8,7 +8,6 @@
 const FONTS='<link rel="preconnect" href="https://fonts.googleapis.com">\n<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;0,500;1,400&family=Pinyon+Script&family=Trirong:wght@300;400;500&family=Taviraj:wght@300;400&display=swap">';
 const LIBS=['gsap/3.12.5/gsap.min.js','gsap/3.12.5/ScrollTrigger.min.js','qrcode-generator/1.4.4/qrcode.min.js']
   .map(p=>`<script src="https://cdnjs.cloudflare.com/ajax/libs/${p}"></script>`).join('\n');
-const ORIGINAL_MAPS='https://maps.app.goo.gl/sEE5bxn7qwUFKzGLA';
 const ICONS={monk:'พระสงฆ์ / ตักบาตร',khanmak:'ขันหมาก / บายศรี',couple:'บ่าวสาว / รับไหว้',food:'อาหาร',none:'ไม่มีไอคอน'};
 
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -219,7 +218,7 @@ const readJSON=id=>{try{return JSON.parse(document.getElementById(id).textConten
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const clone=o=>JSON.parse(JSON.stringify(o));
 const ls={get(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
-const ASSETS={monogram:'monogram.png',monk:'ic-monk.png',khanmak:'ic-khanmak.png',couple:'ic-couple.png',food:'ic-food.png',qr:'qr-map.jpg'};
+const ASSETS={monogram:'monogram.png',monk:'ic-monk.png',khanmak:'ic-khanmak.png',couple:'ic-couple.png',food:'ic-food.png'};
 for(const k in ASSETS)ASSETS[k]=BASE+'assets/'+ASSETS[k];
 if(G){gsap.registerPlugin(ScrollTrigger);ScrollTrigger.config({ignoreMobileResize:true});}
 
@@ -355,11 +354,10 @@ function init(D,{preview=false}={}){
   roseRow($('#gRoses'));swag($('#swag'));swag($('#swag2'));
   $$('.pr').forEach(pearlRing);swans($('#swans'));hangers($('#hangers'),D.colors);
 
-  /* QR: the printed card's code for the original pin, generated for a new link */
+  /* QR code generated from the Google Maps link */
   const qr=$('#qr');
   if(qr){const u=safeUrl(D.mapsUrl);
-    if(u===ORIGINAL_MAPS&&ASSETS.qr)qr.src=ASSETS.qr;
-    else if(window.qrcode){try{const q=qrcode(0,'M');q.addData(u);q.make();qr.src=q.createDataURL(5,2);}catch(e){qr.remove();}}
+    if(window.qrcode){try{const q=qrcode(0,'M');q.addData(u);q.make();qr.src=q.createDataURL(5,2);}catch(e){qr.remove();}}
     else{qr.remove();$('.qr-cap')&&$('.qr-cap').remove();}}
 
   initWishes(D);
