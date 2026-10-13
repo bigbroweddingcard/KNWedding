@@ -1,0 +1,74 @@
+{
+  "title": "Kanjanaporn & Nattapong",
+  "monogramText": "KN",
+  "heroEyebrow": "The wedding of",
+  "nameLatin1": "Kanjanaporn",
+  "nameLatin2": "Nattapong",
+  "nicknames": "มด & เต้",
+  "heroDate": "09 · 01 · 2027",
+  "weddingAt": "2027-01-09T07:09",
+  "calendarEnd": "2027-01-09T14:00",
+  "countdownNote": "ถึงเวลาเริ่มพิธีสงฆ์ 07.09 น.",
+  "welcomeScript": "Welcome to our wedding",
+  "welcomeTitle": "ยินดีต้อนรับ",
+  "welcomeText": "ขอบคุณที่เปิดการ์ดใบนี้\nเลื่อนลงเพื่อดูรายละเอียดวันสำคัญ\nของมดและเต้",
+  "brideParents": "นาวาตรีสมชาย ก้านแก้ว\nนางเนตรนภา ก้านแก้ว",
+  "groomParents": "นายเชิญ กุลคง\nนางดาวรุ่ง กุลคง",
+  "inviteText": "มีความยินดีเรียนเชิญท่านเพื่อเป็นเกียรติ\nเนื่องในพิธีมงคลสมรส ระหว่าง",
+  "brideName": "นางสาวกาญจนาพร ก้านแก้ว",
+  "brideNick": "(มด)",
+  "groomName": "นายนัฐพงศ์ กุลคง",
+  "groomNick": "(เต้)",
+  "dateThai": "วันเสาร์ที่ 9 มกราคม พ.ศ. 2570",
+  "venueTitle": "พิธีมงคลสมรส",
+  "venueDate": "วันเสาร์ที่ 9 มกราคม 2570",
+  "venueTime": "เริ่มพิธีสงฆ์ เวลา 07.09 น.",
+  "address": "บ้านเลขที่ 27 หมู่ 6 บ้านสระยายชี\nตำบลเนินปอ อำเภอสามง่าม\nจังหวัดพิจิตร",
+  "mapsUrl": "https://maps.app.goo.gl/sEE5bxn7qwUFKzGLA",
+  "calendarTitle": "งานแต่งงาน มด & เต้",
+  "timeline": [
+    {
+      "icon": "monk",
+      "time": "07.09 น.",
+      "text": "พิธีสงฆ์"
+    },
+    {
+      "icon": "khanmak",
+      "time": "08.09 น.",
+      "text": "พิธีแห่ขันหมาก\nพิธีบายศรีสู่ขวัญ"
+    },
+    {
+      "icon": "couple",
+      "time": "09.09 น.",
+      "text": "พิธีรับไหว้\nพิธีผูกแขน"
+    },
+    {
+      "icon": "food",
+      "time": "11.00 น.",
+      "text": "ร่วมรับประทานอาหาร"
+    }
+  ],
+  "dressTitle": "สีพาสเทล",
+  "dressText": "แต่งกายโทนสีพาสเทล ตามเฉดสีด้านล่าง",
+  "colors": [
+    "#9eeed8",
+    "#a6e3a3",
+    "#f4b8b2",
+    "#f77d7d",
+    "#d9a6a3",
+    "#fca476",
+    "#fbf07c"
+  ],
+  "wishesText": "สำหรับท่านที่ไม่สะดวกมาร่วมงาน\nฝากคำอวยพรถึงมดและเต้ได้ที่นี่\nทุกข้อความจะเก็บไว้เป็นที่ระลึก",
+  "letterTo": "Dear Mod & Tae",
+  "letterText": "ขอให้รักกันตลอดไป…",
+  "sorry": "( ขออภัยหากมิได้มาเรียนเชิญด้วยตัวเอง )",
+  "closing": "See you there",
+  "wishUrl": "",
+  "wishPhrases": [
+    "ขอให้รักกันตลอดไป",
+    "ขอให้มีความสุขมาก ๆ",
+    "ยินดีด้วยนะ เสียดายที่ไปร่วมงานไม่ได้",
+    "ขอให้ครอบครัวอบอุ่นและมั่นคง"
+  ]
+}
