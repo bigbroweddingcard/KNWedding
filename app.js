@@ -364,6 +364,7 @@ function init(D,{preview=false}={}){
 
   /* countdown */
   const target=bkk(D.weddingAt);let counting=false;
+  { const cdSec=$('.countdown');if(cdSec)cdSec.hidden=!target; }
   const partsOf=()=>{let ms=Math.max(0,(target?+target:Date.now())-Date.now());const d=Math.floor(ms/864e5);ms%=864e5;return{d,h:Math.floor(ms/36e5),m:Math.floor(ms%36e5/6e4)};};
   const paint=p=>{$('#cd-d').textContent=p.d;$('#cd-h').textContent=String(p.h).padStart(2,'0');$('#cd-m').textContent=String(p.m).padStart(2,'0');};
   paint(partsOf());clearInterval(cdTimer);cdTimer=setInterval(()=>{if(!counting)paint(partsOf());},1000);
@@ -544,7 +545,7 @@ let draft=null,password=ss.get(PW_KEY),panel=null,pvBar=null;
 
 const FIELDS=[
   ['หน้าแรก',[['nameLatin1','ชื่อภาษาอังกฤษ บรรทัดที่ 1'],['nameLatin2','ชื่อภาษาอังกฤษ บรรทัดที่ 2'],['nicknames','ชื่อเล่น'],['heroDate','วันที่บนหน้าแรก'],['heroEyebrow','ข้อความเล็กด้านบน'],['monogramText','อักษรย่อบนตราประทับซองจดหมาย'],['title','ชื่อการ์ด (แสดงบนแท็บเบราว์เซอร์)']]],
-  ['วันและเวลา',[['weddingAt','วันเวลาเริ่มงาน','datetime-local','ใช้ทั้งนับถอยหลัง ปฏิทิน และเป็นรหัสผ่านหน้านี้ ถ้าเปลี่ยนวัน รหัสผ่านจะเปลี่ยนตามวันใหม่'],['calendarEnd','เวลาจบงาน (สำหรับปฏิทิน)','datetime-local'],['countdownNote','ข้อความใต้นับถอยหลัง'],['dateThai','วันที่แบบเต็ม (ภาษาไทย)']]],
+  ['วันและเวลา',[['weddingAt','วันเวลาเริ่มงาน','datetime-local','ใช้กับนับถอยหลังและปฏิทิน เมื่อบันทึกแล้ว รหัสผ่านหน้านี้จะเป็นวันแต่งงาน (วว ดด ปปปป) ถ้าเว้นว่าง รหัสผ่านคือรหัสเริ่มต้น'],['calendarEnd','เวลาจบงาน (สำหรับปฏิทิน)','datetime-local'],['countdownNote','ข้อความใต้นับถอยหลัง'],['dateThai','วันที่แบบเต็ม (ภาษาไทย)']]],
   ['ยินดีต้อนรับ',[['welcomeScript','ข้อความตัวเขียน (ภาษาอังกฤษ)'],['welcomeTitle','หัวข้อ'],['welcomeText','ข้อความ','textarea']]],
   ['ครอบครัวและบ่าวสาว',[['brideParents','บิดา–มารดาฝ่ายเจ้าสาว','textarea'],['groomParents','บิดา–มารดาฝ่ายเจ้าบ่าว','textarea'],['inviteText','ข้อความเรียนเชิญ','textarea'],['brideName','ชื่อ-นามสกุลเจ้าสาว'],['brideNick','ชื่อเล่นเจ้าสาว'],['groomName','ชื่อ-นามสกุลเจ้าบ่าว'],['groomNick','ชื่อเล่นเจ้าบ่าว']]],
   ['สถานที่',[['venueTitle','หัวข้อ'],['venueDate','วันที่'],['venueTime','เวลา'],['address','ที่อยู่','textarea'],['mapsUrl','ลิงก์ Google Maps','url','QR code บนการ์ดจะสร้างใหม่จากลิงก์นี้'],['calendarTitle','ชื่อกิจกรรมเมื่อแขกบันทึกลงปฏิทิน']]],
@@ -576,13 +577,13 @@ function renderLogin(message){
     try{
       const res=await api({action:'login',password:inp.value});
       if(res&&res.ok){password=inp.value;ss.set(PW_KEY,password);if(res.data&&!same(res.data,DATA)){DATA=res.data;ls.set(CACHE_KEY,{data:DATA});rerender(DATA);}renderEditor();}
-      else{err.textContent=res&&res.error==='locked'?'ใส่รหัสผิดหลายครั้ง ระบบพักไว้ 10 นาที แล้วลองใหม่':'รหัสผ่านไม่ถูกต้อง พิมพ์วันแต่งงาน เช่น 09012027';inp.select();}
+      else{err.textContent=res&&res.error==='locked'?'ใส่รหัสผิดหลายครั้ง ระบบพักไว้ 10 นาที แล้วลองใหม่':'รหัสผ่านไม่ถูกต้อง';inp.select();}
     }catch(ex){err.textContent='เชื่อมต่อไม่ได้ ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่';}
     btn.disabled=false;
   }},[
     el('img',{src:ASSETS.monogram,alt:''}),
     el('h1',{text:'แก้ไขการ์ดแต่งงาน'}),
-    el('p',{text:'สำหรับเจ้าของการ์ด ใส่รหัสผ่านเป็นวันแต่งงาน (วันเดือนปี)'}),
+    el('p',{text:'สำหรับเจ้าของการ์ด รหัสผ่านคือวันแต่งงาน (วว ดด ปปปป) ถ้ายังไม่ได้ตั้งวันแต่งงาน ใช้รหัสเริ่มต้น'}),
     inp,btn,err,
     el('button',{class:'mini',type:'button',text:'ไปที่การ์ด',onclick:toCard})
   ]);
@@ -629,7 +630,7 @@ function colorsBox(){
   };draw();return box;
 }
 function validate(D){
-  if(!bkk(D.weddingAt))return 'กรุณาใส่วันเวลาเริ่มงานให้ครบ';
+  if(D.weddingAt&&!bkk(D.weddingAt))return 'กรุณาใส่วันเวลาเริ่มงานให้ครบ หรือเว้นว่างไว้';
   if(D.mapsUrl&&!safeUrl(D.mapsUrl))return 'ลิงก์ Google Maps ต้องขึ้นต้นด้วย https://';
   return '';
 }
@@ -676,9 +677,9 @@ async function save(){
   try{
     const res=await api({action:'save',password,data:draft});
     if(res&&res.ok){
-      const dateChanged=draft.weddingAt!==DATA.weddingAt;
+      const dateChanged=!!res.passwordChanged;
       DATA=clone(draft);ls.set(CACHE_KEY,{data:DATA});ss.del(DRAFT_KEY);rerender(DATA);
-      if(dateChanged){password=null;ss.del(PW_KEY);renderLogin('บันทึกแล้ว วันแต่งงานเปลี่ยน รหัสผ่านใหม่คือวันใหม่ เข้าสู่ระบบอีกครั้ง');return;}
+      if(dateChanged){password=null;ss.del(PW_KEY);renderLogin(draft.weddingAt?'บันทึกแล้ว รหัสผ่านตอนนี้คือวันแต่งงาน (วว ดด ปปปป) เข้าสู่ระบบอีกครั้ง':'บันทึกแล้ว ไม่มีวันแต่งงาน รหัสผ่านกลับเป็นรหัสเริ่มต้น เข้าสู่ระบบอีกครั้ง');return;}
       setStatus('บันทึกแล้ว แขกที่เปิดการ์ดหลังจากนี้จะเห็นข้อมูลใหม่');
     }else if(res&&(res.error==='password'||res.error==='locked')){
       password=null;ss.del(PW_KEY);renderLogin(res.error==='locked'?'ใส่รหัสผิดหลายครั้ง ระบบพักไว้ 10 นาที':'รหัสผ่านไม่ถูกต้อง เข้าสู่ระบบอีกครั้ง (การแก้ไขยังเก็บไว้)');return;

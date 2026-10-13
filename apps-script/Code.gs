@@ -2,10 +2,11 @@
  * Wedding card backend (Google Apps Script, bound to the sheet "อวยพรงานแต่ง").
  *  - action=wish  : a guest's blessing -> new row in the first sheet
  *  - action=card  : the card's text (edited at /admin), stored in a sheet "card-data"
- *  - action=login / action=save : owner tools; password = wedding date
+ *  - action=login / action=save : owner tools; password = the saved wedding date,
+ *    or DEFAULT_PASSWORD while no wedding date is saved
  * Deploy: Deploy > New deployment > Web app, Execute as: Me, Who has access: Anyone.
  */
-var DEFAULT_WEDDING = '2027-01-09T07:09';   // used until the first save from /admin
+var DEFAULT_PASSWORD = '03061991';   // used while no wedding date is saved from /admin
 var DATA_SHEET = 'card-data';
 
 function doGet(e) {
@@ -28,8 +29,10 @@ function doPost(e) {
     if (!body.data || typeof body.data !== 'object') return out({ ok: false, error: 'bad_request' });
     var text = JSON.stringify(body.data);
     if (text.length > 40000) return out({ ok: false, error: 'too_large' });
+    var before = weddingParts(readCard());
     writeCard(text);
-    return out({ ok: true });
+    var after = weddingParts(body.data);
+    return out({ ok: true, passwordChanged: String(before) !== String(after) });
   }
   return out({ ok: false, error: 'unknown_action' });
 }
@@ -73,13 +76,16 @@ function checkPassword(pw) {
   var cache = CacheService.getScriptCache();
   var fails = Number(cache.get('fails') || 0);
   if (fails >= 8) return 'locked';
-  var card = readCard();
-  var at = (card && card.weddingAt) || DEFAULT_WEDDING;
-  var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(at);
+  var m = weddingParts(readCard());
   var given = String(pw || '').replace(/\D/g, '');
-  if (m && given && variants(m[1], m[2], m[3]).indexOf(given) >= 0) { cache.remove('fails'); return true; }
+  var valid = m ? variants(m[1], m[2], m[3]) : [DEFAULT_PASSWORD];
+  if (given && valid.indexOf(given) >= 0) { cache.remove('fails'); return true; }
   cache.put('fails', String(fails + 1), 600);
   return 'password';
+}
+function weddingParts(card) {
+  var m = card && /^(\d{4})-(\d{2})-(\d{2})/.exec(String(card.weddingAt || ''));
+  return m || null;
 }
 function variants(y, mo, d) {
   var be = String(Number(y) + 543), dd = String(Number(d)), mm = String(Number(mo));
