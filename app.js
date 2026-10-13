@@ -163,6 +163,8 @@ function markup(D){
         <p id="w-thanks"></p>
         <button type="button" class="mini" id="w-again">เขียนอีกฉบับ</button>
       </div>
+      <div class="w-wall-head">คำอวยพรจากทุกคน</div>
+      <div class="w-wall" id="w-wall" aria-label="คำอวยพรจากแขกท่านอื่น"></div>
     </div>
   </section>
 
@@ -484,17 +486,62 @@ function initWishes(D){
       if(!res||!res.ok)throw new Error((res&&res.error)||'failed');
       ls.del(WISH_KEY);
       playSent(name,msg);
+      startWall({n:name,r:rl.value,m:msg});
     }catch(ex){
       err.textContent='ส่งไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วกดส่งอีกครั้ง (ข้อความจะไม่ถูกบันทึกซ้ำ)';
     }finally{busy=false;send.disabled=false;send.classList.remove('busy');}
   });
   $('#w-again').addEventListener('click',()=>{
-    id=newId();nm.value='';rl.value='';ms.value='';sync();
+    stopWall();id=newId();nm.value='';rl.value='';ms.value='';sync();
     $('#w-sent').hidden=true;wf.hidden=false;if(window.gsap)gsap.set(wf,{clearProps:'all'});
     wf.scrollIntoView({behavior:reduce?'auto':'smooth',block:'center'});
     if(G)ScrollTrigger.refresh();
   });
 }
+/* ---------- floating wall of other guests' blessings ---------- */
+const wall={list:[],i:0,timer:0,refresh:0,visible:false,io:null,mine:null};
+function wishCard(w,mine){
+  const c=document.createElement('figure');c.className='w-note'+(mine?' mine':'');
+  const q=document.createElement('blockquote');q.textContent=w.m;
+  const by=document.createElement('figcaption');by.textContent='— '+w.n+(w.r?' · '+w.r:'');
+  c.append(q,by);return c;
+}
+function spawn(){
+  const box=$('#w-wall');if(!box||!wall.list.length)return;
+  const w=wall.list[wall.i%wall.list.length];wall.i++;
+  const c=wishCard(w,w===wall.mine);
+  const lane=wall.i%2;                       /* alternate left and right lanes so cards never stack */
+  c.style.left=(lane?48:2)+Math.random()*2+'%';
+  c.style.setProperty('--dur',(13+Math.random()*4).toFixed(1)+'s');
+  c.style.setProperty('--sway',((Math.random()<.5?-1:1)*(6+Math.random()*10)).toFixed(0)+'px');
+  c.style.setProperty('--tilt',((Math.random()-.5)*6).toFixed(1)+'deg');
+  c.addEventListener('animationend',()=>c.remove());
+  box.append(c);
+}
+function loop(){clearInterval(wall.timer);if(reduce){return;}wall.timer=setInterval(()=>{if(wall.visible)spawn();},2500);}
+async function loadWishes(){
+  try{const res=await apiGet({action:'wishes',t:Date.now()});
+    if(res&&res.ok&&Array.isArray(res.wishes)){
+      const others=res.wishes.filter(w=>!(wall.mine&&w.n===wall.mine.n&&w.m===wall.mine.m));
+      for(let k=others.length-1;k>0;k--){const j=(Math.random()*(k+1))|0;[others[k],others[j]]=[others[j],others[k]];}
+      wall.list=wall.mine?[wall.mine,...others]:others;
+    }}catch(e){}
+}
+async function startWall(mine){
+  const box=$('#w-wall');if(!box)return;
+  wall.mine=mine;wall.list=[mine];wall.i=0;box.innerHTML='';
+  await loadWishes();
+  if(reduce){wall.list.slice(0,6).forEach(w=>box.append(wishCard(w,w===wall.mine)));box.classList.add('still');return;}
+  /* play only while the wall is on screen; pause the moment the guest scrolls to another part */
+  wall.io&&wall.io.disconnect();
+  wall.io=new IntersectionObserver(es=>{wall.visible=es[0].isIntersecting;box.classList.toggle('paused',!wall.visible);if(wall.visible&&!box.children.length)spawn();},{threshold:.15});
+  wall.io.observe(box);
+  setTimeout(()=>{spawn();setTimeout(spawn,1300);},1800);
+  loop();
+  clearInterval(wall.refresh);wall.refresh=setInterval(()=>{if(wall.visible)loadWishes();},60000);
+}
+function stopWall(){clearInterval(wall.timer);clearInterval(wall.refresh);wall.io&&wall.io.disconnect();const box=$('#w-wall');if(box)box.innerHTML='';}
+
 function playSent(name,msg){
   const wf=$('#wishForm'),sent=$('#w-sent');
   $('#w-paper-text').textContent=msg.length>46?msg.slice(0,46)+'…':msg;

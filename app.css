@@ -263,3 +263,25 @@ p{margin:0;line-height:1.95}
 .w-done .script{font-family:var(--f-script);font-size:2rem;color:var(--gold);line-height:1.1}
 .w-done h3{font-family:var(--f-th-display);font-weight:500;font-size:1.45rem;margin:4px 0 6px}
 .w-done p{color:var(--ink-soft);font-size:.95rem;max-width:28ch;margin:0 auto}
+
+/* ---------- floating blessings ---------- */
+.w-wall-head{font-family:var(--f-th-display);font-size:.95rem;color:var(--ink-soft);margin-top:34px;letter-spacing:.04em}
+.w-wall{position:relative;height:440px;margin:10px -20px 0;overflow:hidden;
+  -webkit-mask-image:linear-gradient(transparent,#000 14%,#000 80%,transparent);mask-image:linear-gradient(transparent,#000 14%,#000 80%,transparent)}
+.w-note{position:absolute;top:0;width:min(50%,230px);margin:0;padding:14px 14px 12px;background:#fffdf9;border:1px solid rgba(182,151,106,.45);border-radius:4px;
+  box-shadow:0 8px 18px rgba(90,70,60,.10);text-align:left;opacity:0;will-change:transform,opacity;
+  animation:floatUp var(--dur,14s) linear forwards}
+.w-note.mine{background:#fbeef0;border-color:rgba(176,80,94,.45)}
+.w-note blockquote{margin:0;font-family:var(--f-th-display);font-size:.88rem;line-height:1.6;color:var(--ink);display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
+.w-note figcaption{margin-top:8px;font-size:.78rem;color:var(--rose)}
+.w-note::before{content:"♥";position:absolute;top:-9px;right:12px;font-size:14px;color:#d27f89}
+.w-wall.paused .w-note{animation-play-state:paused}
+.w-wall.still{height:auto;-webkit-mask-image:none;mask-image:none;display:grid;gap:10px;padding:0 20px}
+.w-wall.still .w-note{position:static;width:auto;opacity:1;animation:none}
+@keyframes floatUp{
+  0%{transform:translate3d(0,450px,0) rotate(var(--tilt));opacity:0}
+  10%{opacity:1}
+  50%{transform:translate3d(var(--sway),150px,0) rotate(calc(var(--tilt)*-1))}
+  85%{opacity:1}
+  100%{transform:translate3d(0,-200px,0) rotate(var(--tilt));opacity:0}
+}

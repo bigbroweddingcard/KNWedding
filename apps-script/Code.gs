@@ -1,6 +1,7 @@
 /**
  * Wedding card backend (Google Apps Script, bound to the sheet "อวยพรงานแต่ง").
  *  - action=wish  : a guest's blessing -> new row in the first sheet
+ *  - action=wishes: recent blessings for the floating wall (put anything in column E to hide a row)
  *  - action=card  : the card's text (edited at /admin), stored in a sheet "card-data"
  *  - action=login / action=save : owner tools; password = the saved wedding date,
  *    or DEFAULT_PASSWORD while no wedding date is saved
@@ -12,6 +13,7 @@ var DATA_SHEET = 'card-data';
 function doGet(e) {
   var p = (e && e.parameter) || {};
   if (p.action === 'card') return out({ ok: true, data: readCard() });
+  if (p.action === 'wishes') return out({ ok: true, wishes: listWishes() });
   return out({ ok: true, service: 'wedding-card' });
 }
 
@@ -48,14 +50,36 @@ function saveWish(b) {
   lock.waitLock(10000);
   try {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
-    if (sheet.getLastRow() === 0) sheet.appendRow(['เวลา', 'ชื่อ', 'เกี่ยวข้องเป็น', 'คำอวยพร']);
+    if (sheet.getLastRow() === 0) sheet.appendRow(['เวลา', 'ชื่อ', 'เกี่ยวข้องเป็น', 'คำอวยพร', 'ซ่อน (ใส่อะไรก็ได้เพื่อไม่ให้แสดงบนการ์ด)']);
     sheet.appendRow([new Date(), safe(name), safe(rel), safe(msg)]);
     if (id) cache.put('w' + id, '1', 21600);
+    cache.remove('wishes');
   } finally {
     lock.releaseLock();
   }
   return { ok: true };
 }
+
+/* Newest 80 visible blessings, cached for 30 s */
+function listWishes() {
+  var cache = CacheService.getScriptCache();
+  var hit = cache.get('wishes');
+  if (hit) return JSON.parse(hit);
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+  var last = sheet.getLastRow();
+  var list = [];
+  if (last >= 2) {
+    var rows = sheet.getRange(2, 1, last - 1, 5).getValues();
+    for (var i = rows.length - 1; i >= 0 && list.length < 80; i--) {
+      var r = rows[i];
+      if (String(r[4] || '').trim() || !r[1] || !r[3]) continue;
+      list.push({ n: plain(r[1]).slice(0, 80), r: plain(r[2]).slice(0, 40), m: plain(r[3]).slice(0, 300) });
+    }
+  }
+  cache.put('wishes', JSON.stringify(list), 30);
+  return list;
+}
+function plain(v) { return String(v == null ? '' : v).replace(/^'/, ''); }
 
 /* ---------- card text ---------- */
 function dataSheet() {
