@@ -75,12 +75,46 @@ const calStamp=d=>d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
 function calUrl(D){const a=bkk(D.weddingAt);if(!a)return '';const b=bkk(D.calendarEnd)||new Date(+a+6*36e5);
   return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(D.calendarTitle||D.title)+'&dates='+calStamp(a)+'/'+calStamp(b)+'&location='+encodeURIComponent(String(D.address||'').replace(/\n/g,' '));}
 
+/* Everything below can be changed at /admin; these are the values used when a card has not set them */
+const DEFAULTS={
+  /* headings, buttons and small text */
+  gateTap:'แตะเพื่อเปิดการ์ด',gateSub:'You are invited',scrollCue:'เลื่อนลง',
+  cdTitle:'Countdown',cdSub:'นับถอยหลังสู่วันแต่งงาน',cdDays:'วัน',cdHours:'ชั่วโมง',cdMins:'นาที',
+  familiesTitle:'Together with their families',brideSide:'ฝ่ายเจ้าสาว',groomSide:'ฝ่ายเจ้าบ่าว',dateHint:'↻ แตะการ์ดวันที่เพื่อพลิก',
+  storyHead:'Our Story',storyTitle:'เรื่องราวของเรา',storyText:'',
+  venueEyebrow:'Ceremony & Reception',mapBtn:'เปิดแผนที่ Google Maps',calBtn:'บันทึกลงปฏิทิน',qrHint:'↻ แตะการ์ดเพื่อดู QR แผนที่',qrEyebrow:'Find your way',qrTitle:'สแกนเพื่อนำทาง',
+  galleryHead:'Gallery',gallerySub:'ภาพความทรงจำของเรา',photos:[],
+  tlTitle:'Timeline',tlSub:'กำหนดการ',dressHead:'Dress Code',
+  giftHead:'Gift',giftSub:'ร่วมแสดงความยินดี',giftText:'',bankName:'',accountName:'',accountNo:'',promptpay:'',giftQr:'',
+  wishTitle:'Wishes',wishSub:'ฝากคำอวยพร',wishNameLabel:'ชื่อของคุณ',wishRelLabel:'เกี่ยวข้องกับบ่าวสาวเป็น',wishMsgLabel:'คำอวยพร',wishBtn:'ส่งคำอวยพร',
+  relOptions:['ญาติฝ่ายเจ้าสาว','ญาติฝ่ายเจ้าบ่าว','เพื่อนเจ้าสาว','เพื่อนเจ้าบ่าว','เพื่อนร่วมงาน','อื่น ๆ'],
+  thanksScript:'Thank you',thanksTitle:'ได้รับคำอวยพรแล้ว',wallTitle:'คำอวยพรจากทุกคน',
+  contactHead:'Contact',contactSub:'ติดต่อสอบถาม',contacts:[],
+  /* pictures and music */
+  heroStyle:'villa',heroImage:'',musicUrl:'',
+  /* sections on or off */
+  showGate:true,showCurtains:true,showPetals:true,showWelcome:true,showCountdown:true,showDateTiles:true,showStory:true,showQR:true,showCalendar:true,
+  showGallery:true,showTimeline:true,showDress:true,showGift:true,showWishes:true,showWall:true,showContact:true,
+  /* motion */
+  autoOpen:9,motion:'full'
+};
+const V=(D,k)=>(D&&D[k]!==undefined&&D[k]!==null)?D[k]:DEFAULTS[k];
+const on=(D,k)=>V(D,k)!==false;
+const lines=v=>(Array.isArray(v)?v:String(v||'').split('\n')).map(s=>String(s).trim()).filter(Boolean);
+
 function markup(D){
-  const maps=safeUrl(D.mapsUrl),cal=calUrl(D),dp=dateParts(D);
+  const L=k=>esc(V(D,k));
+  const maps=safeUrl(D.mapsUrl),cal=on(D,'showCalendar')?calUrl(D):'',dp=on(D,'showDateTiles')?dateParts(D):null,qrOn=maps&&on(D,'showQR');
   const tl=(D.timeline||[]).map(t=>`<div class="ti">${t.icon&&t.icon!=='none'?`<img class="tap3d" data-asset="${esc(t.icon)}" alt="">`:'<span></span>'}<span class="dot"></span><div class="tx"><b>${esc(t.time)}</b><span>${br(t.text)}</span></div></div>`).join('');
+  const photos=lines(V(D,'photos')).map(safeUrl).filter(Boolean);
+  const heroImg=V(D,'heroStyle')==='photo'?safeUrl(V(D,'heroImage')):'';
+  const story=String(V(D,'storyText')||'').trim();
+  const giftOn=on(D,'showGift')&&(V(D,'accountNo')||V(D,'promptpay')||safeUrl(V(D,'giftQr'))||String(V(D,'giftText')).trim());
+  const contacts=lines(V(D,'contacts')).map(l=>{const m=l.split(/[|:]/);const name=m.length>1?m[0].trim():'';const phone=(m.length>1?m.slice(1).join(':'):m[0]).trim();return{name,phone,tel:phone.replace(/[^\d+]/g,'')};}).filter(c=>c.tel.length>=6);
+  const copyRow=(label,value)=>value?`<div class="gift-row"><span>${esc(label)}</span><b>${esc(value)}</b><button type="button" class="copy" data-copy="${esc(value)}">คัดลอก</button></div>`:'';
   return `
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><radialGradient id="pearl" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#f3ede5"/><stop offset="1" stop-color="#cfc2b3"/></radialGradient></defs></svg>
-<div id="gate" role="button" tabindex="0" aria-label="แตะเพื่อเปิดการ์ด">
+${on(D,'showGate')?`<div id="gate" role="button" tabindex="0" aria-label="${L('gateTap')}">
   <div class="inner">
     <div class="door l"><i></i><i></i><span class="knob"></span></div>
     <div class="door r"><i></i><i></i><span class="knob"></span></div>
@@ -88,12 +122,13 @@ function markup(D){
       <svg viewBox="0 0 150 180" aria-hidden="true"><path d="M75 4c16 0 20 10 34 12s26 10 26 26c0 12 11 18 11 48s-11 36-11 48c0 16-12 24-26 26s-18 12-34 12-20-10-34-12-26-10-26-26c0-12-11-18-11-48s11-36 11-48c0-16 12-24 26-26S59 4 75 4z" fill="#f8f1e7" stroke="#b6976a" stroke-width="2"/><path d="M75 14c13 0 17 8 29 10s21 8 21 21c0 10 9 15 9 45s-9 35-9 45c0 13-9 19-21 21s-16 10-29 10-17-8-29-10-21-8-21-21c0-10-9-15-9-45s9-35 9-45c0-13 9-19 21-21s16-10 29-10z" fill="none" stroke="#b6976a" stroke-width=".8"/></svg>
       <img data-asset="monogram" alt="${esc(D.monogramText)}">
     </div>
-    <div class="tap">แตะเพื่อเปิดการ์ด<small>You are invited</small></div>
+    <div class="tap">${L('gateTap')}<small>${L('gateSub')}</small></div>
   </div>
-</div>
+</div>`:''}
 <canvas id="petals" aria-hidden="true"></canvas>
+${safeUrl(V(D,'musicUrl'))?`<audio id="bgm" src="${esc(safeUrl(V(D,'musicUrl')))}" loop preload="none"></audio><button type="button" class="music" id="music" aria-label="เปิดหรือปิดเพลง" aria-pressed="false"><span class="ic">♪</span></button>`:''}
 <main class="page">
-  <section class="hero" id="hero">
+  <section class="hero${on(D,'showCurtains')?'':' no-curtains'}" id="hero">
     <div class="stage" id="stage">
       <div class="stage-inner">
         <div class="hn">
@@ -104,17 +139,17 @@ function markup(D){
           <div class="hn-th">${esc(D.nicknames)}</div>
           <div class="hn-date">${esc(D.heroDate)}</div>
         </div>
-        <div class="villa-wrap"><svg viewBox="0 0 440 330" id="villa" aria-hidden="true"></svg></div>
-        <div class="cw l"><div class="curtain"></div></div>
+        <div class="villa-wrap">${heroImg?`<div class="hero-photo"><img src="${esc(heroImg)}" alt=""></div>`:'<svg viewBox="0 0 440 330" id="villa" aria-hidden="true"></svg>'}</div>
+        ${on(D,'showCurtains')?`<div class="cw l"><div class="curtain"></div></div>
         <div class="cw r"><div class="curtain"></div></div>
-        <div class="valance"><svg viewBox="0 0 440 96" id="valance" aria-hidden="true"></svg></div>
-        <div class="scroll-cue">เลื่อนลง<i>↓</i></div>
+        <div class="valance"><svg viewBox="0 0 440 96" id="valance" aria-hidden="true"></svg></div>`:''}
+        <div class="scroll-cue">${L('scrollCue')}<i>↓</i></div>
       </div>
       <div class="hero-fade"></div>
     </div>
   </section>
 
-  <section class="sec welcome">
+  ${on(D,'showWelcome')?`<section class="sec welcome">
     <svg class="garland" id="gWelcome" viewBox="0 0 440 170" aria-hidden="true"></svg>
     <div class="fw">
       <span class="fl t"></span><span class="fl r"></span><span class="fl b"></span><span class="fl l"></span>
@@ -125,26 +160,26 @@ function markup(D){
       <svg class="swans" viewBox="0 0 200 100" id="swans" aria-hidden="true"></svg>
     </div>
     <svg class="roses" id="gRoses" viewBox="0 0 440 60" aria-hidden="true"></svg>
-  </section>
+  </section>`:''}
 
-  <section class="sec countdown">
-    <div class="ttl rv">Countdown</div>
-    <div class="ttl-th rv">นับถอยหลังสู่วันแต่งงาน</div>
+  ${on(D,'showCountdown')?`<section class="sec countdown">
+    <div class="ttl rv">${L('cdTitle')}</div>
+    <div class="ttl-th rv">${L('cdSub')}</div>
     <div class="rings">
-      <div class="ring"><div class="ring-in tap3d"><svg viewBox="0 0 100 100" class="pr"></svg><div class="num"><b id="cd-d">0</b><small>วัน</small></div></div></div>
-      <div class="ring"><div class="ring-in tap3d"><svg viewBox="0 0 100 100" class="pr"></svg><div class="num"><b id="cd-h">0</b><small>ชั่วโมง</small></div></div></div>
-      <div class="ring"><div class="ring-in tap3d"><svg viewBox="0 0 100 100" class="pr"></svg><div class="num"><b id="cd-m">0</b><small>นาที</small></div></div></div>
+      <div class="ring"><div class="ring-in tap3d"><svg viewBox="0 0 100 100" class="pr"></svg><div class="num"><b id="cd-d">0</b><small>${L('cdDays')}</small></div></div></div>
+      <div class="ring"><div class="ring-in tap3d"><svg viewBox="0 0 100 100" class="pr"></svg><div class="num"><b id="cd-h">0</b><small>${L('cdHours')}</small></div></div></div>
+      <div class="ring"><div class="ring-in tap3d"><svg viewBox="0 0 100 100" class="pr"></svg><div class="num"><b id="cd-m">0</b><small>${L('cdMins')}</small></div></div></div>
     </div>
     <p class="cd-note rv">${esc(D.countdownNote)}</p>
-  </section>
+  </section>`:''}
 
   <svg class="swag" id="swag" viewBox="0 0 440 130" aria-hidden="true"></svg>
 
   <section class="sec names">
-    <div class="eyebrow rv">Together with their families</div>
+    <div class="eyebrow rv">${L('familiesTitle')}</div>
     <div class="parents rv">
-      <div><small>ฝ่ายเจ้าสาว</small>${br(D.brideParents)}</div>
-      <div><small>ฝ่ายเจ้าบ่าว</small>${br(D.groomParents)}</div>
+      <div><small>${L('brideSide')}</small>${br(D.brideParents)}</div>
+      <div><small>${L('groomSide')}</small>${br(D.groomParents)}</div>
     </div>
     <p class="lead rv">${br(D.inviteText)}</p>
     <div class="nm bride">${esc(D.brideName)}<span>${esc(D.brideNick)}</span></div>
@@ -155,32 +190,39 @@ function markup(D){
       <div class="tilewrap"><button type="button" class="tile3d" aria-label="เดือน${esc(dp.mTh)}"><span class="face front"><small>เดือน</small><b class="th">${esc(dp.mTh)}</b></span><span class="face back"><small>Month</small><b class="en">${esc(dp.mEn)}</b></span></button></div>
       <div class="tilewrap"><button type="button" class="tile3d" aria-label="พ.ศ. ${dp.be}"><span class="face front"><small>พ.ศ.</small><b class="yr">${dp.be}</b></span><span class="face back"><small>Year</small><b class="yr">${dp.ce}</b></span></button></div>
     </div>
-    <div class="tap-hint">↻ แตะการ์ดวันที่เพื่อพลิก</div>`:''}
+    <div class="tap-hint">${L('dateHint')}</div>`:''}
     <div class="wdate rv">${esc(D.dateThai)}</div>
   </section>
 
+  ${on(D,'showStory')&&story?`<section class="sec story">
+    <div class="ttl rv">${L('storyHead')}</div>
+    <div class="ttl-th rv">${L('storyTitle')}</div>
+    <hr class="rule">
+    <p class="rv">${br(story)}</p>
+  </section>`:''}
+
   <section class="sec venue">
     <div class="vflip">
-     <div class="vcard3d${maps?' can-flip':''}" id="vcard3d">
+     <div class="vcard3d${qrOn?' can-flip':''}" id="vcard3d">
       <div class="vcard vface vfront">
       <svg class="garland" id="gCard" viewBox="0 0 440 130" aria-hidden="true"></svg>
       <div class="vbody">
-        <div class="eyebrow">Ceremony &amp; Reception</div>
+        <div class="eyebrow">${L('venueEyebrow')}</div>
         <h3>${esc(D.venueTitle)}</h3>
         <div class="vdate">${esc(D.venueDate)}</div>
         <div class="vtime">${esc(D.venueTime)}</div>
         <hr class="rule">
         <div class="vaddr">${br(D.address)}</div>
         <div class="btns">
-          ${maps?`<a class="btn solid" href="${esc(maps)}" target="_blank" rel="noopener">เปิดแผนที่ Google Maps</a>`:''}
-          ${cal?`<a class="btn" href="${esc(cal)}" target="_blank" rel="noopener">บันทึกลงปฏิทิน</a>`:''}
+          ${maps?`<a class="btn solid" href="${esc(maps)}" target="_blank" rel="noopener">${L('mapBtn')}</a>`:''}
+          ${cal?`<a class="btn" href="${esc(cal)}" target="_blank" rel="noopener">${L('calBtn')}</a>`:''}
         </div>
-        ${maps?'<button type="button" class="flip-cta">↻ แตะการ์ดเพื่อดู QR แผนที่</button>':''}
+        ${qrOn?`<button type="button" class="flip-cta">${L('qrHint')}</button>`:''}
       </div>
       </div>
-      ${maps?`<div class="vcard vface vback" aria-label="QR code แผนที่">
-        <div class="eyebrow">Find your way</div>
-        <h3>สแกนเพื่อนำทาง</h3>
+      ${qrOn?`<div class="vcard vface vback" aria-label="QR code แผนที่">
+        <div class="eyebrow">${L('qrEyebrow')}</div>
+        <h3>${L('qrTitle')}</h3>
         <img class="qr" id="qr" alt="QR code แผนที่ไปงาน">
         <div class="vaddr">${br(D.address)}</div>
         <button type="button" class="flip-cta">↻ แตะเพื่อพลิกกลับ</button>
@@ -189,22 +231,43 @@ function markup(D){
     </div>
   </section>
 
-  <section class="sec timeline">
-    <div class="ttl rv">Timeline</div>
-    <div class="ttl-th rv">กำหนดการ</div>
-    <div class="tl" id="tl"><span class="tl-line"></span>${tl}</div>
-  </section>
+  ${on(D,'showGallery')&&photos.length?`<section class="sec gallery">
+    <div class="ttl rv">${L('galleryHead')}</div>
+    <div class="ttl-th rv">${L('gallerySub')}</div>
+    <div class="gal" id="gal">${photos.map((u,i)=>`<button type="button" class="gph" data-i="${i}"><img src="${esc(u)}" alt="ภาพที่ ${i+1}" loading="lazy"></button>`).join('')}</div>
+    <div class="tap-hint">เลื่อนซ้าย–ขวา แตะเพื่อดูภาพใหญ่</div>
+  </section>`:''}
 
-  <section class="sec dress">
-    <div class="ttl rv">Dress Code</div>
+  ${on(D,'showTimeline')&&tl?`<section class="sec timeline">
+    <div class="ttl rv">${L('tlTitle')}</div>
+    <div class="ttl-th rv">${L('tlSub')}</div>
+    <div class="tl" id="tl"><span class="tl-line"></span>${tl}</div>
+  </section>`:''}
+
+  ${on(D,'showDress')?`<section class="sec dress">
+    <div class="ttl rv">${L('dressHead')}</div>
     <div class="ttl-th rv">${esc(D.dressTitle)}</div>
     <p class="rv">${br(D.dressText)}</p>
     <div class="rail-wrap"><span class="rail"></span><div class="hangers" id="hangers"></div></div>
-  </section>
+  </section>`:''}
 
-  <section class="sec wishes">
-    <div class="ttl rv">Wishes</div>
-    <div class="ttl-th rv">ฝากคำอวยพร</div>
+  ${giftOn?`<section class="sec gift">
+    <div class="ttl rv">${L('giftHead')}</div>
+    <div class="ttl-th rv">${L('giftSub')}</div>
+    ${String(V(D,'giftText')).trim()?`<p class="rv gift-text">${br(V(D,'giftText'))}</p>`:''}
+    <div class="gift-card rv">
+      ${V(D,'bankName')?`<div class="gift-bank">${L('bankName')}</div>`:''}
+      ${V(D,'accountName')?`<div class="gift-row"><span>ชื่อบัญชี</span><b>${L('accountName')}</b></div>`:''}
+      ${copyRow('เลขที่บัญชี',V(D,'accountNo'))}
+      ${copyRow('พร้อมเพย์',V(D,'promptpay'))}
+      ${safeUrl(V(D,'giftQr'))?`<img class="gift-qr" src="${esc(safeUrl(V(D,'giftQr')))}" alt="QR code สำหรับโอน">`:''}
+      <div class="copy-note" id="copy-note" role="status"></div>
+    </div>
+  </section>`:''}
+
+  ${on(D,'showWishes')?`<section class="sec wishes">
+    <div class="ttl rv">${L('wishTitle')}</div>
+    <div class="ttl-th rv">${L('wishSub')}</div>
     <p class="intro rv">${br(D.wishesText)}</p>
     <div class="env" id="env">
       <div class="back"></div>
@@ -213,16 +276,16 @@ function markup(D){
       <div class="seal">${esc(D.monogramText)}</div>
     </div>
     <form class="wish-form" id="wishForm" novalidate>
-      <label for="w-name">ชื่อของคุณ</label>
+      <label for="w-name">${L('wishNameLabel')}</label>
       <input id="w-name" name="name" maxlength="80" autocomplete="name" placeholder="เช่น ป้าแดง">
-      <label for="w-rel">เกี่ยวข้องกับบ่าวสาวเป็น <small>(ไม่บังคับ)</small></label>
-      <select id="w-rel" name="rel"><option value="">เลือก</option><option>ญาติฝ่ายเจ้าสาว</option><option>ญาติฝ่ายเจ้าบ่าว</option><option>เพื่อนเจ้าสาว</option><option>เพื่อนเจ้าบ่าว</option><option>เพื่อนร่วมงาน</option><option>อื่น ๆ</option></select>
-      <label for="w-msg">คำอวยพร</label>
+      ${lines(V(D,'relOptions')).length?`<label for="w-rel">${L('wishRelLabel')} <small>(ไม่บังคับ)</small></label>
+      <select id="w-rel" name="rel"><option value="">เลือก</option>${lines(V(D,'relOptions')).map(o=>`<option>${esc(o)}</option>`).join('')}</select>`:'<select id="w-rel" name="rel" hidden><option value=""></option></select>'}
+      <label for="w-msg">${L('wishMsgLabel')}</label>
       <textarea id="w-msg" name="msg" maxlength="500" rows="5" placeholder="เขียนคำอวยพรถึงบ่าวสาว"></textarea>
       <div class="w-count" id="w-count">0/500</div>
       ${(D.wishPhrases||[]).length?`<div class="chips" aria-label="ข้อความสำเร็จรูป">${D.wishPhrases.map(p=>`<button type="button" class="chip">${esc(p)}</button>`).join('')}</div>`:''}
       <div class="w-err" id="w-err" role="alert"></div>
-      <button type="submit" class="btn solid w-send" id="w-send"><span class="lbl">ส่งคำอวยพร</span><span class="spin" aria-hidden="true"></span></button>
+      <button type="submit" class="btn solid w-send" id="w-send"><span class="lbl">${L('wishBtn')}</span><span class="spin" aria-hidden="true"></span></button>
     </form>
     <div class="w-sent" id="w-sent" hidden>
       <div class="w-stage" aria-hidden="true">
@@ -230,15 +293,21 @@ function markup(D){
         <div class="w-hearts"></div>
       </div>
       <div class="w-done" role="status">
-        <div class="script">Thank you</div>
-        <h3>ได้รับคำอวยพรแล้ว</h3>
+        <div class="script">${L('thanksScript')}</div>
+        <h3>${L('thanksTitle')}</h3>
         <p id="w-thanks"></p>
         <button type="button" class="mini" id="w-again">เขียนอีกฉบับ</button>
       </div>
-      <div class="w-wall-head">คำอวยพรจากทุกคน</div>
-      <div class="w-wall" id="w-wall" aria-label="คำอวยพรจากแขกท่านอื่น"></div>
+      ${on(D,'showWall')?`<div class="w-wall-head">${L('wallTitle')}</div>
+      <div class="w-wall" id="w-wall" aria-label="คำอวยพรจากแขกท่านอื่น"></div>`:''}
     </div>
-  </section>
+  </section>`:''}
+
+  ${on(D,'showContact')&&contacts.length?`<section class="sec contact">
+    <div class="ttl rv">${L('contactHead')}</div>
+    <div class="ttl-th rv">${L('contactSub')}</div>
+    <div class="contacts rv">${contacts.map(c=>`<a class="btn contact-btn" href="tel:${esc(c.tel)}">${c.name?`<span>${esc(c.name)}</span>`:''}<b>${esc(c.phone)}</b></a>`).join('')}</div>
+  </section>`:''}
 
   <section class="sec foot">
     <svg class="swag" id="swag2" viewBox="0 0 440 130" aria-hidden="true"></svg>
@@ -246,7 +315,8 @@ function markup(D){
     <img class="rv mono tap3d" data-asset="monogram" alt="${esc(D.monogramText)}">
     <div class="script rv">${esc(D.closing)}</div>
   </section>
-</main>`;
+</main>
+<div class="lightbox" id="lightbox" hidden><button type="button" class="lb-close" aria-label="ปิด">×</button><img alt=""><button type="button" class="lb-prev" aria-label="ภาพก่อนหน้า">‹</button><button type="button" class="lb-next" aria-label="ภาพถัดไป">›</button></div>`;
 }
 
 
@@ -434,35 +504,48 @@ function init(D,{preview=false}={}){
   const TT=theme(D);WC=FLOWER_SETS[TT.flowers];applyTheme(TT);
   const logo=safeUrl(D.monogramUrl);
   $$('[data-asset]').forEach(img=>{const k=img.dataset.asset,a=k==='monogram'&&logo?logo:ASSETS[k];if(a)img.src=a;});
-  villa($('#villa'));valance($('#valance'));
-  garland($('#gWelcome'),{h:170,clusters:13});
-  garland($('#gCard'),{h:130,clusters:11,roses:4,sag:8});
-  roseRow($('#gRoses'));swag($('#swag'));swag($('#swag2'));
-  $$('.pr').forEach(pearlRing);swans($('#swans'));hangers($('#hangers'),D.colors);
+  const draw=(sel,fn,...a)=>{const el=$(sel);if(el)fn(el,...a);};
+  draw('#villa',villa);draw('#valance',valance);
+  draw('#gWelcome',garland,{h:170,clusters:13});
+  draw('#gCard',garland,{h:130,clusters:11,roses:4,sag:8});
+  draw('#gRoses',roseRow);draw('#swag',swag);draw('#swag2',swag);
+  $$('.pr').forEach(pearlRing);draw('#swans',swans);draw('#hangers',hangers,D.colors);
 
   /* QR code generated from the Google Maps link */
   const qr=$('#qr');
   if(qr){const u=safeUrl(D.mapsUrl);
     if(window.qrcode){try{const q=qrcode(0,'M');q.addData(u);q.make();qr.src=q.createDataURL(5,2);}catch(e){qr.remove();}}
-    else{qr.remove();$('.qr-cap')&&$('.qr-cap').remove();}}
+    else qr.remove();}
 
   initWishes(D);
   initTaps();
+  initGallery();
+  initCopy();
+  initMusic();
 
   /* countdown */
   const target=bkk(D.weddingAt);let counting=false;
   { const cdSec=$('.countdown');if(cdSec)cdSec.hidden=!target; }
+  const hasCd=!!$('#cd-d');
   const partsOf=()=>{let ms=Math.max(0,(target?+target:Date.now())-Date.now());const d=Math.floor(ms/864e5);ms%=864e5;return{d,h:Math.floor(ms/36e5),m:Math.floor(ms%36e5/6e4)};};
-  const paint=p=>{$('#cd-d').textContent=p.d;$('#cd-h').textContent=String(p.h).padStart(2,'0');$('#cd-m').textContent=String(p.m).padStart(2,'0');};
-  paint(partsOf());clearInterval(cdTimer);cdTimer=setInterval(()=>{if(!counting)paint(partsOf());},1000);
+  const paint=p=>{if(!hasCd)return;$('#cd-d').textContent=p.d;$('#cd-h').textContent=String(p.h).padStart(2,'0');$('#cd-m').textContent=String(p.m).padStart(2,'0');};
+  paint(partsOf());clearInterval(cdTimer);if(hasCd)cdTimer=setInterval(()=>{if(!counting)paint(partsOf());},1000);
   const countUp=()=>{const t=partsOf(),o={d:0,h:0,m:0};counting=true;
     gsap.to(o,{d:t.d,h:t.h,m:t.m,duration:1.8,ease:'power2.out',onUpdate:()=>paint({d:Math.round(o.d),h:Math.round(o.h),m:Math.round(o.m)}),onComplete:()=>{counting=false;paint(partsOf());}});};
 
-  /* gate */
+  /* gate (doors) and curtains */
   const gate=$('#gate'),stage=$('#stage');let opened=false;
+  const wantPetals=on(D,'showPetals');
+  const reveal=()=>{
+    if(!G){stage.classList.add('open');return;}
+    gsap.to('.curtain',{scaleX:.32,duration:2.6,ease:'power3.inOut'});
+    gsap.from('.hn > *',{y:26,opacity:0,stagger:.12,duration:1.1,delay:.7,ease:'power3.out'});
+    if(wantPetals)petals();
+  };
   const unlock=()=>{document.documentElement.classList.remove('lock');gate&&gate.remove();GATE='open';if(G)ScrollTrigger.refresh();if(PENDING){const p=PENDING;PENDING=null;rerender(p);}};
-  const openGate=()=>{
+  const openGate=fromTap=>{
     if(opened)return;opened=true;GATE='opening';clearTimeout(gateTimer);
+    if(fromTap===true)startMusic();          /* browsers allow sound only after a tap */
     if(!G){stage.classList.add('open');unlock();return;}
     gsap.timeline({onComplete:unlock})
       .to('.plaque',{scale:1.08,duration:.2,ease:'power1.out'})
@@ -471,18 +554,30 @@ function init(D,{preview=false}={}){
       .to('.door.r',{xPercent:102,rotationY:-18,duration:1.5,ease:'power3.inOut'},'<')
       .fromTo('.stage-inner',{scale:1.14},{scale:1,duration:2,ease:'power2.out'},'<')
       .to('#gate',{backgroundColor:'rgba(230,221,211,0)',duration:.6},'<+.3')
-      .add(()=>{gsap.to('.curtain',{scaleX:.32,duration:2.6,ease:'power3.inOut'});
-        gsap.from('.hn > *',{y:26,opacity:0,stagger:.12,duration:1.1,delay:.7,ease:'power3.out'});petals();},'-=1.1');
+      .add(reveal,'-=1.1');
   };
-  if(preview){GATE='open';stage.classList.add('open');if(G)gsap.set('.curtain',{scaleX:.32});gate.remove();document.documentElement.classList.remove('lock');}
-  else{GATE='closed';document.documentElement.classList.add('lock');
-    gate.addEventListener('click',openGate);
-    gate.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openGate();}});
-    gateTimer=setTimeout(openGate,9000);}
+  if(preview||!gate){
+    GATE='open';gate&&gate.remove();document.documentElement.classList.remove('lock');
+    if(preview){stage.classList.add('open');if(G)gsap.set('.curtain',{scaleX:.32});}
+    else setTimeout(reveal,400);
+  }else{
+    GATE='closed';document.documentElement.classList.add('lock');
+    gate.addEventListener('click',()=>openGate(true));
+    gate.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openGate(true);}});
+    const wait=Number(V(D,'autoOpen'));if(wait>0)gateTimer=setTimeout(openGate,wait*1000);
+  }
 
-  if(!G)return;
+  const motion=V(D,'motion');
+  if(!G||motion==='off')return;
   document.documentElement.classList.add('anim');
   const S=(trigger,start='top 88%',end='top 30%',scrub=.6)=>({trigger,start,end,scrub});
+  const has=sel=>!!$(sel);
+
+  /* gentle text reveals in both "full" and "light" motion */
+  $$('.rv').forEach(el=>gsap.from(el,{y:30,opacity:0,duration:1.1,ease:'power3.out',scrollTrigger:{trigger:el,start:'top 92%',once:true}}));
+  $$('.ti').forEach(el=>ScrollTrigger.create({trigger:el,start:'top 68%',onEnter:()=>el.classList.add('on'),onLeaveBack:()=>el.classList.remove('on')}));
+  if(has('.rings'))ScrollTrigger.create({trigger:'.rings',start:'top 88%',once:true,onEnter:countUp});
+  if(motion==='light'){ScrollTrigger.refresh();return;}
 
   /* hero: curtains gather, valance lifts, camera moves toward the villa door */
   gsap.timeline({scrollTrigger:{trigger:'#hero',start:'top top',end:'bottom bottom',scrub:.6}})
@@ -493,48 +588,83 @@ function init(D,{preview=false}={}){
     .to('.villa-wrap',{scale:1.7,ease:'power1.in',duration:1},0)
     .to('.hero-fade',{opacity:1,ease:'none',duration:.15},.85);
 
-  $$('.rv').forEach(el=>gsap.from(el,{y:30,opacity:0,duration:1.1,ease:'power3.out',scrollTrigger:{trigger:el,start:'top 92%',once:true}}));
-
-  ['#gWelcome','#gCard'].forEach(id=>{
+  ['#gWelcome','#gCard'].filter(has).forEach(id=>{
     gsap.from(id+' .wc',{scaleY:0,transformOrigin:'50% 0%',stagger:{each:.05,from:'center'},ease:'none',scrollTrigger:S(id,'top 95%','bottom 35%')});
     gsap.from(id+' .rs',{scale:0,rotation:-140,transformOrigin:'50% 50%',stagger:.08,ease:'back.out(1.7)',scrollTrigger:S(id,'top 95%','top 45%')});
   });
-  gsap.from('#gRoses .rs',{scale:0,rotation:-120,transformOrigin:'50% 50%',stagger:.05,ease:'back.out(1.7)',scrollTrigger:S('#gRoses','top 98%','top 60%')});
-
-  gsap.timeline({scrollTrigger:S('.fw','top 80%','bottom 75%')})
+  if(has('#gRoses'))gsap.from('#gRoses .rs',{scale:0,rotation:-120,transformOrigin:'50% 50%',stagger:.05,ease:'back.out(1.7)',scrollTrigger:S('#gRoses','top 98%','top 60%')});
+  if(has('.fw'))gsap.timeline({scrollTrigger:S('.fw','top 80%','bottom 75%')})
     .from('.fl.t',{scaleX:0,ease:'none'}).from('.fl.r',{scaleY:0,ease:'none'}).from('.fl.b',{scaleX:0,ease:'none'}).from('.fl.l',{scaleY:0,ease:'none'});
-  gsap.timeline({scrollTrigger:S('#swans','top 98%','top 55%')})
+  if(has('#swans'))gsap.timeline({scrollTrigger:S('#swans','top 98%','top 55%')})
     .from('.swan.l',{x:-80,opacity:0,ease:'power2.out'},0).from('.swan.r',{x:80,opacity:0,ease:'power2.out'},0)
     .from('.heart',{scale:0,transformOrigin:'50% 50%',ease:'back.out(3)',duration:.4},.6);
-
-  gsap.from('.ring',{scale:.3,rotation:-200,opacity:0,stagger:.14,duration:1.3,ease:'back.out(1.5)',
-    scrollTrigger:{trigger:'.rings',start:'top 88%',once:true,onEnter:countUp}});
-
-  ['#swag','#swag2'].forEach(id=>{
+  if(has('.ring'))gsap.from('.ring',{scale:.3,rotation:-200,opacity:0,stagger:.14,duration:1.3,ease:'back.out(1.5)',scrollTrigger:{trigger:'.rings',start:'top 88%',once:true}});
+  ['#swag','#swag2'].filter(has).forEach(id=>{
     gsap.from(id+' .pl',{scale:0,transformOrigin:'50% 50%',stagger:.012,ease:'none',scrollTrigger:S(id,'top 98%','top 45%',.4)});
     gsap.from(id+' .rs',{scale:0,rotation:-160,transformOrigin:'50% 50%',stagger:.1,scrollTrigger:S(id,'top 90%','top 50%')});
   });
-
   gsap.from('.bride',{x:-70,opacity:0,ease:'power2.out',scrollTrigger:S('.bride','top 95%','top 60%')});
   gsap.from('.groom',{x:70,opacity:0,ease:'power2.out',scrollTrigger:S('.groom','top 98%','top 62%')});
   gsap.from('.amp',{rotationY:-540,scale:.3,opacity:0,transformPerspective:600,ease:'power2.out',scrollTrigger:S('.amp','top 98%','top 55%')});
-
   gsap.from('.vflip',{opacity:0,scale:.95,y:24,ease:'power1.out',scrollTrigger:S('.venue','top 95%','top 55%')});
-  if($('.cal3d'))gsap.from('.tilewrap',{rotationX:-100,opacity:0,transformOrigin:'50% 0%',transformPerspective:700,stagger:.18,ease:'power1.out',scrollTrigger:S('.cal3d','top 95%','top 60%')});
-
-  gsap.fromTo('.tl-line',{scaleY:0},{scaleY:1,ease:'none',scrollTrigger:S('#tl','top 70%','bottom 65%',.4)});
-  $$('.ti').forEach(el=>ScrollTrigger.create({trigger:el,start:'top 68%',onEnter:()=>el.classList.add('on'),onLeaveBack:()=>el.classList.remove('on')}));
-
-  gsap.from('.rail',{scaleX:0,ease:'none',scrollTrigger:S('.rail-wrap','top 95%','top 60%')});
-  if($$('.hg').length)gsap.from('.hg',{x:i=>140+i*38,opacity:0,stagger:.06,ease:'power2.out',scrollTrigger:S('.rail-wrap','top 92%','top 45%')});
-
-  gsap.timeline({scrollTrigger:S('#env','top 92%','top 40%')})
+  if(has('.cal3d'))gsap.from('.tilewrap',{rotationX:-100,opacity:0,transformOrigin:'50% 0%',transformPerspective:700,stagger:.18,ease:'power1.out',scrollTrigger:S('.cal3d','top 95%','top 60%')});
+  if(has('#tl'))gsap.fromTo('.tl-line',{scaleY:0},{scaleY:1,ease:'none',scrollTrigger:S('#tl','top 70%','bottom 65%',.4)});
+  if(has('.rail-wrap')){
+    gsap.from('.rail',{scaleX:0,ease:'none',scrollTrigger:S('.rail-wrap','top 95%','top 60%')});
+    if($$('.hg').length)gsap.from('.hg',{x:i=>140+i*38,opacity:0,stagger:.06,ease:'power2.out',scrollTrigger:S('.rail-wrap','top 92%','top 45%')});
+  }
+  if(has('#gal'))gsap.from('.gph',{rotationY:-70,opacity:0,transformPerspective:800,stagger:.08,ease:'power2.out',scrollTrigger:S('#gal','top 95%','top 60%')});
+  if(has('.gift-card'))gsap.from('.gift-card',{rotationX:-35,opacity:0,transformPerspective:900,transformOrigin:'50% 0%',ease:'power1.out',scrollTrigger:S('.gift-card','top 95%','top 60%')});
+  if(has('#env'))gsap.timeline({scrollTrigger:S('#env','top 92%','top 40%')})
     .to('#env .seal',{scale:0,opacity:0,duration:.2,ease:'none'})
     .to('#env .flap',{rotationX:180,transformPerspective:700,duration:.45,ease:'none'})
     .set('#env .flap',{zIndex:0})
     .to('#env .letter',{yPercent:-58,duration:.45,ease:'power1.out'});
 
   ScrollTrigger.refresh();
+}
+
+/* ---------- background music: starts with the tap that opens the doors ---------- */
+let musicWanted=false;
+function startMusic(){const a=$('#bgm');if(!a)return;musicWanted=true;a.play().then(()=>setMusic(true)).catch(()=>setMusic(false));}
+function setMusic(playing){const b=$('#music');if(b){b.classList.toggle('playing',playing);b.setAttribute('aria-pressed',String(playing));}}
+function initMusic(){
+  const a=$('#bgm'),b=$('#music');if(!a||!b)return;
+  b.addEventListener('click',()=>{if(a.paused){musicWanted=true;a.play().then(()=>setMusic(true)).catch(()=>setMusic(false));}else{musicWanted=false;a.pause();setMusic(false);}});
+  /* pause when the guest leaves the tab, resume when they come back */
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)a.pause();else if(musicWanted)a.play().catch(()=>{});});
+}
+
+/* ---------- gallery: 3D cover-flow strip and a full-screen viewer ---------- */
+function initGallery(){
+  const gal=$('#gal');if(!gal)return;
+  const items=$$('.gph');
+  const flow=()=>{const mid=gal.scrollLeft+gal.clientWidth/2;
+    items.forEach(it=>{const c=it.offsetLeft+it.offsetWidth/2,d=Math.max(-1.6,Math.min(1.6,(c-mid)/it.offsetWidth));
+      it.style.transform=reduce?'':`perspective(800px) rotateY(${(-d*32).toFixed(1)}deg) scale(${(1-Math.min(1,Math.abs(d))*.14).toFixed(3)})`;
+      it.style.zIndex=String(100-Math.round(Math.abs(d)*10));it.style.opacity=String(1-Math.min(1,Math.abs(d))*.35);});};
+  let raf=0;gal.addEventListener('scroll',()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(flow);},{passive:true});
+  addEventListener('resize',flow);setTimeout(flow,50);
+  const lb=$('#lightbox'),img=lb.querySelector('img');let cur=0;
+  const show=i=>{cur=(i+items.length)%items.length;img.src=items[cur].querySelector('img').src;lb.hidden=false;document.documentElement.classList.add('lock');};
+  const close=()=>{lb.hidden=true;if(!$('#gate'))document.documentElement.classList.remove('lock');};
+  items.forEach((it,i)=>it.addEventListener('click',()=>show(i)));
+  lb.querySelector('.lb-close').addEventListener('click',close);
+  lb.querySelector('.lb-prev').addEventListener('click',e=>{e.stopPropagation();show(cur-1);});
+  lb.querySelector('.lb-next').addEventListener('click',e=>{e.stopPropagation();show(cur+1);});
+  lb.addEventListener('click',e=>{if(e.target===lb)close();});
+  let sx=0;lb.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;},{passive:true});
+  lb.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>50)show(cur+(dx<0?1:-1));},{passive:true});
+}
+
+/* ---------- gift: copy account numbers ---------- */
+function initCopy(){
+  $$('.copy').forEach(b=>b.addEventListener('click',async()=>{
+    const v=b.dataset.copy,note=$('#copy-note');
+    try{await navigator.clipboard.writeText(v);note.textContent='คัดลอก '+v+' แล้ว';}
+    catch(e){const r=document.createRange();r.selectNodeContents(b.previousElementSibling);const s=getSelection();s.removeAllRanges();s.addRange(r);note.textContent='เลือกข้อความแล้ว กดค้างเพื่อคัดลอก';}
+    b.classList.add('done');setTimeout(()=>b.classList.remove('done'),1500);
+  }));
 }
 
 /* Re-render the card from draft data, for the owner's preview */
@@ -707,7 +837,17 @@ const FIELDS=[
   ['TIMELINE'],
   ['Dress code',[['dressTitle','หัวข้อ'],['dressText','คำอธิบาย','textarea']]],
   ['COLORS'],
-  ['คำอวยพร',[['wishesText','ข้อความ','textarea'],['wishPhrases','ข้อความสำเร็จรูปให้แขกแตะเลือก','lines','บรรทัดละ 1 ข้อความ'],['letterTo','ข้อความบนจดหมาย (บรรทัดแรก)'],['letterText','ข้อความบนจดหมาย (บรรทัดที่สอง)']]],
+  ['คำอวยพร',[['wishesText','ข้อความ','textarea'],['wishPhrases','ข้อความสำเร็จรูปให้แขกแตะเลือก','lines','บรรทัดละ 1 ข้อความ'],['relOptions','ตัวเลือก "เกี่ยวข้องกับบ่าวสาวเป็น"','lines','บรรทัดละ 1 ตัวเลือก ว่างไว้ = ไม่ถาม'],['letterTo','ข้อความบนจดหมาย (บรรทัดแรก)'],['letterText','ข้อความบนจดหมาย (บรรทัดที่สอง)']]],
+  ['รูปภาพและเพลง',[['heroStyle','ภาพบนหน้าแรก','select','',[['villa','ภาพวาดวิลล่า'],['photo','รูปบ่าวสาว (ใส่ลิงก์ด้านล่าง)']]],['heroImage','ลิงก์รูปบ่าวสาวบนหน้าแรก','url','รูปแนวตั้งจะสวยที่สุด'],
+    ['photos','ลิงก์รูปแกลเลอรี','lines','บรรทัดละ 1 ลิงก์ ว่างไว้ = ไม่แสดงแกลเลอรี'],['musicUrl','ลิงก์เพลงประกอบ (.mp3)','url','เพลงเริ่มเล่นเมื่อแขกแตะเปิดประตู แขกกดปุ่ม ♪ เพื่อหยุดได้']]],
+  ['เรื่องราวของเรา',[['storyHead','หัวข้อภาษาอังกฤษ'],['storyTitle','หัวข้อภาษาไทย'],['storyText','เรื่องราว','textarea','ว่างไว้ = ไม่แสดงส่วนนี้']]],
+  ['ร่วมยินดี (ซองออนไลน์)',[['giftHead','หัวข้อภาษาอังกฤษ'],['giftSub','หัวข้อภาษาไทย'],['giftText','ข้อความ','textarea'],['bankName','ธนาคาร'],['accountName','ชื่อบัญชี'],['accountNo','เลขที่บัญชี'],['promptpay','พร้อมเพย์'],['giftQr','ลิงก์รูป QR สำหรับโอน','url','ไม่ใส่ข้อมูลบัญชีเลย = ไม่แสดงส่วนนี้']]],
+  ['ติดต่อ',[['contactHead','หัวข้อภาษาอังกฤษ'],['contactSub','หัวข้อภาษาไทย'],['contacts','รายชื่อผู้ติดต่อ','lines','บรรทัดละ 1 คน เช่น เจ้าสาว | 081-234-5678 แขกแตะแล้วโทรออกได้']]],
+  ['ข้อความหัวข้อและปุ่ม',[['gateTap','ข้อความบนประตู'],['gateSub','ข้อความเล็กบนประตู'],['scrollCue','ข้อความชวนเลื่อนลง'],['cdTitle','หัวข้อนับถอยหลัง'],['cdSub','คำอธิบายนับถอยหลัง'],['cdDays','คำว่า "วัน"'],['cdHours','คำว่า "ชั่วโมง"'],['cdMins','คำว่า "นาที"'],
+    ['familiesTitle','หัวข้อครอบครัว'],['brideSide','ป้ายฝ่ายเจ้าสาว'],['groomSide','ป้ายฝ่ายเจ้าบ่าว'],['dateHint','คำแนะนำใต้การ์ดวันที่'],['venueEyebrow','หัวข้อเล็กการ์ดพิธี'],['mapBtn','ปุ่มแผนที่'],['calBtn','ปุ่มปฏิทิน'],['qrHint','คำแนะนำพลิกการ์ด'],['qrEyebrow','หัวข้อเล็กด้าน QR'],['qrTitle','หัวข้อด้าน QR'],
+    ['galleryHead','หัวข้อแกลเลอรี'],['gallerySub','คำอธิบายแกลเลอรี'],['tlTitle','หัวข้อกำหนดการ'],['tlSub','คำอธิบายกำหนดการ'],['dressHead','หัวข้อ Dress code'],['wishTitle','หัวข้อคำอวยพร'],['wishSub','คำอธิบายคำอวยพร'],
+    ['wishNameLabel','ป้ายช่องชื่อ'],['wishRelLabel','ป้ายช่องความสัมพันธ์'],['wishMsgLabel','ป้ายช่องคำอวยพร'],['wishBtn','ปุ่มส่งคำอวยพร'],['thanksScript','ข้อความตัวเขียนหลังส่ง'],['thanksTitle','หัวข้อหลังส่ง'],['wallTitle','หัวข้อคำอวยพรลอย']]],
+  ['อนิเมชั่น',[['motion','ระดับอนิเมชั่นตอนเลื่อน','select','',[['full','เต็มรูปแบบ'],['light','เบา ๆ (ข้อความค่อย ๆ ขึ้น)'],['off','ปิด']]],['autoOpen','ประตูเปิดเองหลังจาก (วินาที)','number','0 = รอให้แขกแตะเปิดเอง']]],
   ['ท้ายการ์ด',[['sorry','ข้อความขออภัย'],['closing','คำลงท้าย']]]
 ];
 
@@ -746,11 +886,15 @@ function renderLogin(message){
   setTimeout(()=>inp.focus(),50);
 }
 
-function field(key,label,type,hint){
-  const id='f-'+key,list=type==='lines',v=draft[key]==null?'':list?(draft[key]||[]).join('\n'):draft[key];
-  const input=type==='textarea'||list?el('textarea',{id,rows:list?'4':'3'}):el('input',{id,type:type||'text'});
-  input.value=v;
-  input.addEventListener('input',()=>{draft[key]=list?input.value.split('\n').map(s=>s.trim()).filter(Boolean):input.value;ss.set(DRAFT_KEY,draft);});
+function field(key,label,type,hint,opts){
+  const id='f-'+key,cur=V(draft,key),list=type==='lines';
+  const save=v=>{draft[key]=v;ss.set(DRAFT_KEY,draft);};
+  let input;
+  if(type==='select'){input=el('select',{id});opts.forEach(([v,t])=>{const o=el('option',{value:v,text:t});if(String(cur)===v)o.selected=true;input.append(o);});
+    input.addEventListener('change',()=>save(input.value));}
+  else{input=type==='textarea'||list?el('textarea',{id,rows:list?'4':'3'}):el('input',{id,type:type||'text',...(type==='number'?{min:'0',max:'60',inputmode:'numeric'}:{})});
+    input.value=list?lines(cur).join('\n'):(cur==null?'':cur);
+    input.addEventListener('input',()=>save(list?lines(input.value):type==='number'?Number(input.value||0):input.value));}
   return el('div',{},[el('label',{for:id,text:label}),input,hint?el('div',{class:'hint',text:hint}):null]);
 }
 function timelineBox(){
@@ -803,6 +947,18 @@ function resetRow(label,fn){
   return el('div',{class:'reset-row'},el('button',{class:'reset',type:'button',text:'↺ รีเซ็ต'+label,onclick:()=>{fn();ss.set(DRAFT_KEY,draft);applyTheme(theme(draft));redrawKeep('รีเซ็ต'+label+'แล้ว ยังไม่ได้บันทึก');}}));
 }
 const dots=cols=>el('span',{class:'dots'},cols.map(c=>{const i=el('i');i.style.background=c;return i;}));
+const SHOW_LABELS=[['showGate','ประตูเปิดตอนเริ่ม'],['showCurtains','ผ้าม่าน'],['showPetals','กลีบดอกไม้โปรย'],['showWelcome','ยินดีต้อนรับ'],['showCountdown','นับถอยหลัง'],['showDateTiles','การ์ดวันที่ 3D'],
+  ['showStory','เรื่องราวของเรา'],['showQR','QR แผนที่ (พลิกการ์ด)'],['showCalendar','ปุ่มบันทึกปฏิทิน'],['showGallery','แกลเลอรีรูป'],['showTimeline','กำหนดการ'],['showDress','Dress code'],
+  ['showGift','ร่วมยินดี'],['showWishes','ส่งคำอวยพร'],['showWall','คำอวยพรลอยหลังส่ง'],['showContact','ติดต่อ']];
+function togglesBox(){
+  const box=el('fieldset',{},[el('legend',{text:'เปิด/ปิดส่วนต่าง ๆ'}),el('div',{class:'hint',text:'ส่วนที่ยังไม่มีข้อมูล (เช่น แกลเลอรี เรื่องราว ร่วมยินดี ติดต่อ) จะไม่แสดงจนกว่าจะใส่ข้อมูล'})]);
+  const grid=el('div',{class:'toggles'});
+  SHOW_LABELS.forEach(([k,label])=>{const c=el('input',{type:'checkbox',id:'sw-'+k});c.checked=on(draft,k);
+    c.addEventListener('change',()=>{draft[k]=c.checked;ss.set(DRAFT_KEY,draft);});
+    grid.append(el('label',{class:'tog',for:'sw-'+k},[c,el('span',{text:label})]));});
+  box.append(grid,resetRow('การเปิด/ปิด',()=>{SHOW_LABELS.forEach(([k])=>delete draft[k]);}));
+  return box;
+}
 function themeBoxes(){
   const T=draft.theme,changed=()=>{ss.set(DRAFT_KEY,draft);applyTheme(T);};
   // colours
@@ -855,6 +1011,8 @@ function validate(D){
   if(D.weddingAt&&!bkk(D.weddingAt))return 'กรุณาใส่วันเวลาเริ่มงานให้ครบ หรือเว้นว่างไว้';
   if(D.mapsUrl&&!safeUrl(D.mapsUrl))return 'ลิงก์ Google Maps ต้องขึ้นต้นด้วย https://';
   if(D.monogramUrl&&!safeUrl(D.monogramUrl))return 'ลิงก์รูปโลโก้ต้องขึ้นต้นด้วย https://';
+  for(const [k,name] of [['heroImage','รูปบนหน้าแรก'],['musicUrl','เพลงประกอบ'],['giftQr','รูป QR สำหรับโอน']])if(D[k]&&!safeUrl(D[k]))return 'ลิงก์'+name+'ต้องขึ้นต้นด้วย https://';
+  if(lines(D.photos).some(u=>!safeUrl(u)))return 'ลิงก์รูปแกลเลอรีทุกบรรทัดต้องขึ้นต้นด้วย https://';
   const T=D.theme;if(T&&T.bg&&T.bg.type==='image'&&!/^https:\/\/[^\s"'<>()\\]+$/i.test(T.bg.image||''))return 'ใส่ลิงก์รูปพื้นหลังที่ขึ้นต้นด้วย https:// หรือเลือกพื้นหลังแบบอื่น';
   return '';
 }
@@ -870,12 +1028,13 @@ function renderEditor(msg,isErr){
   if(msg)status.textContent=msg;else if(restored)status.textContent='มีการแก้ไขที่ยังไม่ได้บันทึก';else status.hidden=true;
   inner.append(status);
   inner.append(el('h2',{class:'adm-sec'},['หน้าตาการ์ด',el('small',{text:'เปลี่ยนแล้วเห็นผลบนการ์ดทันที กด "ดูตัวอย่าง" เพื่อดูเต็มจอ'})]));
+  inner.append(togglesBox());
   themeBoxes().forEach(b=>inner.append(b));
   inner.append(el('h2',{class:'adm-sec'},['ข้อความบนการ์ด',el('small',{text:'ปุ่มรีเซ็ตแต่ละส่วนจะคืนค่าเป็นข้อความตั้งต้นของการ์ด'})]));
   FIELDS.forEach(([title,list])=>{
     if(title==='TIMELINE')return inner.append(timelineBox());
     if(title==='COLORS')return inner.append(colorsBox());
-    inner.append(el('fieldset',{},[el('legend',{text:title}),...list.map(([k,l,t,h])=>field(k,l,t,h)),
+    inner.append(el('fieldset',{},[el('legend',{text:title}),...list.map(([k,l,t,h,o])=>field(k,l,t,h,o)),
       resetRow(title,()=>{list.forEach(([k])=>{if(BUILT[k]===undefined)delete draft[k];else draft[k]=clone(BUILT[k]);});})]));
   });
   inner.append(el('div',{},[
